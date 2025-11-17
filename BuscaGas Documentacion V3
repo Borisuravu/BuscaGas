@@ -1,0 +1,2027 @@
+PSI - Plan de Sistemas de Información
+PSI 1: Inicio del Plan de Sistemas de Información
+Nombre del Proyecto
+BuscaGas Localizador de gasolineras económicas en España.
+
+Descripción y Objetivos
+Aplicación móvil para Android que permite a los usuarios localizar en tiempo real las gasolineras más económicas cercanas a su ubicación, utilizando datos oficiales del Ministerio para la Transición Ecológica y el Reto Demográfico del Gobierno de España.
+
+Objetivos específicos
+-Proporcionar información actualizada de precios de combustible.
+-Facilitar la localización geográfica de gasolineras mediante mapa interactivo.
+-Reducir el tiempo de búsqueda del usuario a menos de 10 segundos.
+-Ofrecer una interfaz simple y accesible.
+
+Ámbito del Sistema
+-Geográfico: Territorio español.
+-Funcional: Consulta y visualización de precios de combustible.
+-Tecnológico: Aplicación móvil nativa Android mediante Flutter.
+-Usuarios: Conductores en España con dispositivos Android.
+EVS - Estudio de Viabilidad del Sistema
+EVS 1: Establecimiento del Alcance del Sistema
+Descripción General del Sistema
+Sistema de información móvil que utiliza datos abiertos gubernamentales para presentar información geolocalizada de estaciones de servicio de combustible y sus precios.
+
+Alcance Funcional del MVP
+Funcionalidades incluidas:
+1. Visualización de mapa interactivo centrado en la ubicación del usuario.
+2. Representación de gasolineras mediante marcadores con código de color según precio.
+3. Filtrado por tipo de combustible (Gasolina 95, Diésel Gasóleo A).
+4. Sincronización periódica con API gubernamental.
+5. Configuración de preferencias básicas (radio de búsqueda, combustible preferido).
+6. Modo claro/oscuro.
+7. Información básica al seleccionar marcador (tarjeta flotante).
+
+Funcionalidades excluidas del MVP:
+-Detalle de gasolinera en pantalla dedicada.
+-Vista de lista ordenable.
+-Sistema de favoritos.
+-Integración con navegación GPS externa.
+
+Usuarios Identificados
+-Usuario final: Conductor con smartphone Android que busca optimizar gasto en combustible.
+EVS 2: Estudio de la Situación Actual
+Fuentes de Datos
+API oficial del Gobierno de España:
+-URL: https://datos.gob.es/es/catalogo/e05068001-precio-de-carburantes-en-las-gasolineras-espanolas
+-Formato: JSON/XML.
+-Actualización: Datos oficiales actualizados periódicamente.
+-Acceso: Público, sin autenticación.
+
+Datos Relevantes por Gasolinera
+-Identificador único.
+-Coordenadas geográficas (latitud, longitud).
+-Dirección y localidad.
+-Precios por tipo de combustible.
+-Nombre del operador.
+
+EVS 3: Definición de Requisitos del Sistema
+Requisitos Funcionales
+RF-01: Geolocalización
+-El sistema debe obtener la ubicación actual del usuario mediante GPS.
+-Debe solicitar permisos de ubicación al primer uso.
+-Debe proporcionar botón de recentrado.
+
+RF-02: Visualización en Mapa
+-El sistema mostrará mapa interactivo con marcadores de gasolineras.
+-Los marcadores usarán código de color según rango de precios.
+-El mapa permitirá zoom y desplazamiento.
+
+RF-03: Filtrado por Combustible
+-El usuario podrá seleccionar entre Gasolina 95 o Diésel Gasóleo A.
+-El filtro actualizará inmediatamente los marcadores visibles.
+
+RF-04: Actualización de Datos
+-El sistema descargará datos de la API gubernamental al inicio.
+-Se ejecutará actualización automática periódica en segundo plano.
+-El usuario será informado durante las cargas.
+
+RF-05: Información Básica
+-Al tocar un marcador, se mostrará tarjeta flotante con:
+  Nombre de la gasolinera.
+  Precio del combustible seleccionado.
+  Distancia aproximada.
+
+RF-06: Configuración
+-Radio de búsqueda configurable (5, 10, 20, 50 km).
+-Combustible preferido por defecto.
+-Alternancia entre modo claro/oscuro.
+
+RF-07: Experiencia Inicial
+-Pantalla de inicio con logo durante carga inicial.
+-Solicitud de preferencia de tema claro/oscuro (solo primera ejecución).
+
+Requisitos No Funcionales
+RNF-01: Rendimiento
+-Tiempo de carga inicial inferior a 3 segundos.
+-Respuesta a interacciones de usuario inferior a 500ms.
+
+RNF-02: Usabilidad
+-El usuario debe encontrar la gasolinera más barata en menos de 10 segundos.
+-Interfaz minimalista y clara.
+-Tipografía legible con precios destacados.
+
+RNF-03: Compatibilidad
+-Android 6.0 (API 23) o superior.
+
+RNF-04: Precisión
+-Los datos deben coincidir exactamente con la fuente oficial.
+-Coordenadas con precisión de al menos 100 metros.
+
+RNF-05: Disponibilidad
+-Funcionamiento offline con última caché de datos (deseable).
+-Gestión de errores de conexión con mensajes claros.
+
+RNF-06: Accesibilidad
+-Contraste adecuado en ambos modos (claro/oscuro).
+-Tamaño de texto legible sin zoom.
+
+EVS 4: Estudio de Alternativas de Solución
+Tecnología de Desarrollo Seleccionada: Flutter.
+
+Mapas: Google Maps Flutter Plugin.
+
+Almacenamiento Local: SharedPreferences.
+
+Opcional: Hive/SQLite.
+-Para caché de datos de gasolineras.
+-Consultas eficientes por proximidad geográfica.
+
+ASI - Análisis del Sistema de Información
+ASI 1: Definición del Sistema
+Descripción Arquitectónica
+1. Capa de Presentación
+-Widgets Flutter para UI.
+-Gestión de temas (claro/oscuro).
+-Componentes de mapa.
+
+2. Capa de Lógica de Negocio
+-Filtrado de gasolineras por distancia y tipo de combustible.
+-Cálculo de distancias geográficas.
+-Clasificación por rangos de precio.
+
+3. Capa de Datos
+-Cliente HTTP para API gubernamental.
+-Parser de respuestas JSON/XML.
+-Caché local de datos.
+
+4. Capa de Servicios del Sistema
+-Servicio de geolocalización.
+-Servicio de mapas.
+-Gestor de preferencias.
+
+ASI 2: Identificación de Subsistemas de Análisis
+Subsistemas Identificados
+SS-01: Gestión de Ubicación
+-Obtención de permisos.
+-Lectura de coordenadas GPS.
+-Recentrado de mapa.
+
+SS-02: Gestión de Datos de Combustible
+-Descarga desde API.
+-Parsing y validación.
+-Actualización periódica.
+-Almacenamiento en caché.
+
+SS-03: Visualización Cartográfica
+-Renderizado de mapa.
+-Gestión de marcadores.
+-Código de color según precio.
+-Interacción táctil.
+
+SS-04: Filtrado y Búsqueda
+-Filtro por tipo de combustible.
+-Filtro por radio de distancia.
+-Cálculo de distancias.
+-Ordenación por precio.
+
+SS-05: Configuración de Usuario
+-Almacenamiento de preferencias.
+-Gestión de temas visuales.
+-Configuración de parámetros de búsqueda.
+
+SS-06: Interfaz de Usuario
+-Pantalla de inicio.
+-Pantalla principal (mapa).
+-Pantalla de configuración.
+-Tarjetas informativas.
+
+ASI 3: Análisis de Casos de Uso
+CU-01: Localizar Gasolinera Más Barata
+Actor: Usuario conductor
+
+Precondiciones:
+-Aplicación instalada.
+-Permisos de ubicación concedidos.
+-Conexión a internet disponible.
+
+Flujo Principal:
+1. Usuario abre la aplicación.
+2. Sistema solicita ubicación GPS.
+3. Sistema descarga datos de API gubernamental.
+4. Sistema calcula distancias a gasolineras cercanas.
+5. Sistema filtra por combustible seleccionado y radio configurado.
+6. Sistema muestra mapa con marcadores coloreados.
+7. Usuario visualiza marcadores (verde=barato, rojo=caro).
+8. Usuario identifica gasolinera más económica cercana.
+9. [Opcional] Usuario toca marcador para ver detalles.
+
+Flujo Alternativo 4a: Sin conexión
+-Sistema muestra mensaje de error.
+-Sistema carga última caché disponible (si existe).
+
+Postcondiciones:
+-Usuario tiene información actualizada de precios.
+-Sistema ha almacenado datos en caché.
+
+CU-02: Configurar Preferencias
+Actor: Usuario conductor.
+
+Precondiciones:
+-Aplicación ejecutándose.
+
+Flujo Principal:
+1. Usuario toca icono de configuración (engranaje).
+2. Sistema muestra pantalla de configuración.
+3. Usuario modifica radio de búsqueda (5/10/20/50 km).
+4. Usuario selecciona combustible preferido.
+5. Usuario alterna modo claro/oscuro.
+6. Usuario regresa al mapa.
+7. Sistema guarda preferencias.
+8. Sistema aplica cambios inmediatamente.
+
+Postcondiciones:
+-Preferencias almacenadas persistentemente
+-Interfaz actualizada según configuración
+
+CU-03: Recentrar Mapa en Ubicación Actual
+Actor: Usuario conductor.
+
+Precondiciones:
+-Mapa visible.
+-Permisos de ubicación activos.
+
+Flujo Principal:
+1. Usuario toca botón "Mi ubicación".
+2. Sistema obtiene coordenadas GPS actuales.
+3. Sistema centra mapa en nueva posición.
+4. Sistema recalcula gasolineras dentro del radio.
+
+Flujo Alternativo 2a: Ubicación no disponible.
+-Sistema muestra mensaje informativo.
+-Sistema mantiene última posición conocida.
+
+Postcondiciones:
+-Mapa centrado en ubicación actual.
+-Datos actualizados para nueva posición.
+
+ASI 4: Análisis de Clases
+Modelo de Dominio
++------------+           uses            +-------------+
+|  Usuario   | ------------------------> | Aplicación  |
++------------+                           +-------------+
+                                           |
+                                           | manages
+                                           v
+                                    +-----------------+
+                                    | Configuración   |
+                                    |-----------------|
+                                    | radioBusqueda   |
+                                    | combustiblePref |
+                                    | temaOscuro      |
+                                    +-----------------+
+
+                                    +-----------------+
+                                    |   Gasolinera    |
+                                    |-----------------|
+                                    | id              |
+                                    | nombre          |
+                                    | latitud         |
+                                    | longitud        |
+                                    | direccion       |
+                                    | localidad       |
+                                    | operador        |
+                                    | precios[]       |
+                                    +-----------------+
+                                           ^
+                                           | contains (1..*)
+                                           |
+                                    +-----------------+
+                                    |     Precio      |
+                                    |-----------------|
+                                    | tipo            |
+                                    | valor           |
+                                    | fechaActualiz.  |
+                                    +-----------------+
+Clases Principales
+Clase: Gasolinera
+class Gasolinera {
+  String id;
+  String nombre;
+  double latitud;
+  double longitud;
+  String direccion;
+  String localidad;
+  String operador;
+  List<Precio> precios;
+  
+  double? getPrecio(TipoCombustible tipo);
+  double calcularDistancia(double lat, double lon);
+}
+
+Clase: Precio
+class Precio {
+  TipoCombustible tipo;
+  double valor;
+  DateTime fechaActualizacion;
+}
+
+Clase: Configuración
+
+class Configuracion {
+  int radioBusqueda; // en km
+  TipoCombustible combustiblePreferido;
+  bool temaOscuro;
+  
+  void guardar();
+  void cargar();
+}
+
+Enumeración: TipoCombustible
+enum TipoCombustible {
+  gasolina95,
+  dieselGasoleoA
+}
+
+ASI 5: Elaboración del Modelo de Datos
+Modelo Entidad-Relación Lógico
++-------------------------------+          +----------------------------------+
+|        CONFIGURACIÓN          |          |            GASOLINERA            |
+|-------------------------------|          |----------------------------------|
+| PK id   : INTEGER  (always 1) |          | PK idGasolinera : VARCHAR(50)    |
+| radioBusqueda : INTEGER       |          | nombre          : VARCHAR(200)   |
+| combustiblePref : VARCHAR(20) |          | latitud         : DECIMAL(10,8)  |
+| temaOscuro      : BOOLEAN     |          | longitud        : DECIMAL(11,8)  |
+| last_api_sync   : DATETIME?   |          | direccion       : VARCHAR(300)   |
++-------------------------------+          | localidad       : VARCHAR(100)   |
+          (singleton)                      | operador        : VARCHAR(100)   |
+                                           | fechaCache      : DATETIME       |
+                                           +----------------------------------+
+                                                         |
+                                                         | 1
+                                                         |
+                                                         | *
+                                              +----------------------------------+
+                                              |              PRECIO              |
+                                              |----------------------------------|
+                                              | PK idPrecio        : INTEGER     |
+                                              | FK idGasolinera    : VARCHAR(50) |
+                                              | tipoCombustible    : VARCHAR(20) |
+                                              | valor              : DECIMAL(5,3)|
+                                              | fechaActualizacion : DATETIME    |
+                                              +----------------------------------+
+Diccionario de Datos
+Tabla: GASOLINERA
++idGasolinera
+-Tipo: VARCHAR(50)
+-Nulo: NO
+-Descripción: Identificador único proporcionado por la API
+
++nombre
+-Tipo: VARCHAR(200)
+-Nulo: NO
+-Descripción: Nombre comercial de la estación
+
++latitud
+-Tipo: DECIMAL(10,8)
+-Nulo: NO
+-Descripción: Coordenada de latitud (WGS84)
+
++longitud
+-Tipo: DECIMAL(11,8)
+-Nulo: NO
+-Descripción: Coordenada de longitud (WGS84)
+
++direccion
+-Tipo: VARCHAR(300)
+-Nulo: SÍ
+-Descripción: Dirección completa (calle, número, etc.)
+
++localidad
+-Tipo: VARCHAR(100)
+-Nulo: SÍ
+-Descripción: Nombre de la localidad o municipio
+
++operador
+-Tipo: VARCHAR(100)
+-Nulo: SÍ
+-Descripción: Empresa operadora de la estación
+
++fechaCache
+-Tipo: DATETIME
+-Nulo: NO
+-Descripción: Fecha y hora de la última sincronización/caché
+
+Tabla: PRECIO
++idPrecio
+-Tipo: INTEGER (autoincremental)
+-Nulo: NO
+-Descripción: Identificador único del registro de precio
+
++idGasolinera
+-Tipo: VARCHAR(50)
+-Nulo: NO
+-Descripción: Clave foránea que referencia idGasolinera en la tabla GASOLINERA
+
++tipoCombustible
+-Tipo: VARCHAR(20)
+-Nulo: NO
+-Descripción: Tipo de combustible (por ejemplo: "gasolina95", "dieselGasoleoA")
+
++valor
+-Tipo: DECIMAL(5,3)
+-Nulo: NO
+-Descripción: Precio en euros por litro (ej.: 1.459)
+
++fecha Actualización
+-Tipo: DATETIME
+-Nulo: NO
+-Descripción: Fecha y hora del dato oficial o de la última actualización del precio
+
+Tabla: CONFIGURACION
++id
+-Tipo: INTEGER
+-Nulo: NO
+-Descripción: Identificador único del registro de configuración (singleton — siempre 1)
+
++radioBusqueda
+-Tipo: INTEGER
+-Nulo: NO
+-Descripción: Radio de búsqueda en kilómetros (valores típicos: 5, 10, 20, 50)
+
++combustiblePref
+-Tipo: VARCHAR(20)
+-Nulo: NO
+-Descripción: Combustible preferido por defecto (ej.: 'gasolina95', 'dieselGasoleoA')
+
++temaOscuro
+-Tipo: BOOLEAN
+-Nulo: NO
+-Descripción: true = modo oscuro, false = modo claro
+
++last_api_sync
+-Tipo: DATETIME
+-Nulo: SÍ
+-Descripción: Fecha y hora de la última sincronización con la API (nulo si aún no se ha sincronizado)
+
+ASI 6: Elaboración del Modelo de Procesos
+Diagrama de Flujo: Proceso Principal
++-------------------------------+
+|           INICIO              |
++-------------------------------+
+             |
+             v
++-------------------------------+
+| Mostrar Pantalla Inicio con   |
+|            Logo               |
++-------------------------------+
+             |
+             v
++-------------------------------+
+|  ¿Primera Ejecución?          |
++-------------------------------+
+      |                |
+     Sí               No
+      |                |
+      v                v
++----------------+   (continúa)
+| Solicitar      |
+| preferencia    |
+| de tema (claro/|
+| oscuro)        |
++----------------+
+      |
+      v
++-------------------------------+
+|Solicitar permisos de ubicación|
++-------------------------------+
+             |
+             v
++-------------------------------+
+| ¿Permisos concedidos?         |
++-------------------------------+
+      |                |
+     No               Sí
+      |                |
+      v                v
++----------------+   +-----------------------+
+| Mostrar mensaje|   | Obtener coordenadas   |
+| explicativo y  |   | GPS actuales          |
+|opción de cerrar|   +-----------------------+
++----------------+       |
+                         v
+                 +-----------------------+
+                 | Descargar datos desde |
+                 | API del Gobierno      |
+                 +-----------------------+
+                         |
+                         v
+                 +-----------------------+
+                 | ¿Descarga exitosa?    |
+                 +-----------------------+
+                      |            |
+                     No           Sí
+                      |            |
+                      v            v
+             +----------------+  +-------------------+
+             | Cargar caché   |  | Parsear JSON /    |
+             |local(si existe)|  | validar datos     |
+             +----------------+  +-------------------+
+                      |            |
+                      |            v
+                      |     +-------------------+
+                      |     | Guardar en caché  |
+                      |     | local (DB)        |
+                      |     +-------------------+
+                      |            |
+                      v            v
+               (ambas ramas convergen aquí)
+                         +-----------------------+
+                         | Cargar configuración  |
+                         | de usuario (prefs)    |
+                         +-----------------------+
+                                     |
+                                     v
+                         +-----------------------+
+                         | Filtrar gasolineras   |
+                         | por radio (5/10/20/50)|
+                         +-----------------------+
+                                     |
+                                     v
+                         +-----------------------+
+                         |Filtrar por combustible|
+                         |preferido (95 / Diésel)|
+                         +-----------------------+
+                                     |
+                                     v
+                         +-----------------------+
+                         | Calcular distancias   |
+                         | (Haversine)           |
+                         +-----------------------+
+                                     |
+                                     v
+                         +-----------------------+
+                         | Clasificar por rangos |
+                         | de precio(percentiles)|
+                         +-----------------------+
+                                     |
+                                     v
+                         +-----------------------+
+                         | Asignar color a       |
+                         | marcadores (verde/    |
+                         | amarillo/rojo)        |
+                         +-----------------------+
+                                     |
+                                     v
+                         +-----------------------+
+                         | Mostrar mapa con      |
+                         | marcadores            |
+                         +-----------------------+
+                                     |
+                                     v
+                         +-----------------------+
+                         | Esperar interacción   |
+                         | del usuario           |
+                         +-----------------------+
+                                     |
+                                     v
+                         +-----------------------+
+                         | ¿Acción del usuario?  |
+                         +-----------------------+
+            ___________________|____________________________
+           |            |             |               |
+           v            v             v               v
++----------------+ +----------------+ +----------------+ +--------------------+
+| Cambiar        | | Abrir          | | Tocar marcador | | Recentrar mapa /   |
+| combustible    | | configuración  | |(mostrar tarjeta)|| obtener nueva      |
+| (selector)     | |(modificar prefs)|+----------------+ | ubicación GPS)     |
++----------------+ +----------------+         |          +--------------------+
+      |                 |                    v                 |
+      v                 v              +---------------+       v
++----------------+  +----------------+ | Volver a      | +---------------------+
+| Actualizar     |  | Guardar prefs  | | Esperar       | | Actualizar mapa y   |
+| vista / recalc |  | y aplicar      | | interacción   | | recalcular gasol.   |
++----------------+  +----------------+ +---------------+ +---------------------+
+           \______________________________|_____________________________/
+                                          v
+                         +-------------------------------+
+                         | Continua ejecución normal /   |
+                         | Espera nuevas interacciones   |
+                         +-------------------------------+
+
+(En paralelo)
++-------------------------------------------+
+| Actualización periódica en background     |
+| - Timer (ej. cada 30 min)                 |
+| - WorkManager (Android)                   |
+| - Descarga, comparar, actualizar caché    |
+| - Notificar UI si hay cambios             |
++-------------------------------------------+
+
+Proceso: Actualización de Datos
++------------------------------------------------+
+| Timer Periódico: cada X minutos                |
++------------------------------------------------+
+                       |
+                       v
++------------------------------------------------+
+| ¿Hay Conexión a Internet?                      |
++------------------------------------------------+
+         |                          |
+        No                         Sí
+         |                          |
+         v                          v
++----------------------+    +-----------------------------+
+|Cancelar Actualización|    | Descargar Datos Frescos API |
++----------------------+    +-----------------------------+
+                                      |
+                                      v
+                        +-------------------------------+
+                        | ¿Descarga exitosa?            |
+                        +-------------------------------+
+                             |                   |
+                            No                  Sí
+                             |                   |
+                             v                   v
+                  +-------------------+   +-------------------------+
+                  | Mantener Datos    |   | Comparar con Caché      |
+                  | Actuales          |   | Actual                  |
+                  +-------------------+   +-------------------------+
+                                                   |
+                                                   v
+                                           +---------------------+
+                                           | ¿Hay Cambios?       |
+                                           +---------------------+
+                                                |           |
+                                               No          Sí
+                                                |           |
+                                                v           v
+                                      +----------------+  +---------------------------+
+                                      | No hacer nada  |  | Actualizar Base de Datos  |
+                                      +----------------+  | Local (DB)                |
+                                                          +---------------------------+
+                                                                    |
+                                                                    v
+                                                           +---------------------------+
+                                                           | Recalcular marcadores     |
+                                                           | visibles (por proximidad /|
+                                                           | tipo de combustible)      |
+                                                           +---------------------------+
+                                                                    |
+                                                                    v
+                                                           +---------------------------+
+                                                           | Actualizar vista sin      |
+                                                           | interrumpir al usuario    |
+                                                           +---------------------------+
+                                                                    |
+                                                                    v
+                                                           +---------------------------+
+                                                           | Registrar timestamp de la |
+                                                           | actualización             |
+                                                           +---------------------------+
+                                                                    |
+                                                                    v
+                                                               +--------+
+                                                               |  FIN   |
+                                                               +--------+
+ASI 7: Definición de Interfaces de Usuario
+IU-01: Pantalla de Inicio
+Elementos:
+-Logo de BuscaGas (centrado).
+-Indicador de carga (spinner).
+-Texto: "Cargando datos...".
+-[Solo primera vez] Diálogo: "¿Prefieres tema claro u oscuro?".
+
+Comportamiento:
+-Duración máxima: 3 segundos.
+-Transición automática a Pantalla Principal.
+
+IU-02: Pantalla Principal - Mapa
+Layout:
+┌─────────────────────────────────────────────────┐
+│ [⚙️ Configuración]        BuscaGas        [     │ ← Barra superior
+├─────────────────────────────────────────────────┤
+│ [Gasolina 95]   [Diésel Gasóleo A]              │ ← Selector combustible
+├─────────────────────────────────────────────────┤
+│                                                 │
+│                 [ MAPA INTERACTIVO ]            │
+│                                                 │
+│          📍 Marcadores con precios              │
+│                                                 │
+│                 🔵 Usuario aquí                 │
+│                                                 │
+│                                                 │
+├─────────────────────────────────────────────────┤
+│                               [📍 Mi Loc]       │ ← Botón recentrar
+└─────────────────────────────────────────────────┘
+Marcadores:
+-Color verde: precio en rango bajo.
+-Color amarillo: precio en rango medio.
+-Color rojo: precio en rango alto.
+-Icono: surtidor de gasolina.
+-Label: precio en €/litro.
+
+Tarjeta Flotante (al tocar marcador):
+┌─────────────────────────────┐
+│ Repsol - Av. Principal 123  │
+│ Gasolina 95: 1.45 €/L       │
+│ 📍 0.8 km                   │
+└─────────────────────────────┘
+Interacciones:
+-Pellizcar: zoom.
+-Arrastrar: desplazar mapa.
+-Tap en marcador: mostrar tarjeta.
+-Tap en "Mi Loc": recentrar.
+-Tap en selector combustible: filtrar.
+-Tap en engranaje: abrir configuración.
+
+IU-03: Pantalla de Configuración
+Layout:
+┌─────────────────────────────────────────────────┐
+│ [← Atrás]            Configuración              │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  Radio de búsqueda                              │
+│  ○ 5 km                                         │
+│  ● 10 km                                        │
+│  ○ 20 km                                        │
+│  ○ 50 km                                        │
+│                                                 │
+│  Combustible preferido                          │
+│  [Dropdown: Gasolina 95           ▼]            │
+│                                                 │
+│  Tema                                           │
+│  [Toggle: ☀️ Claro  |  🌙 Oscuro]               │
+│                                                 │
+│                   [ Volver al Mapa ]            │
+│                                                 │
+└─────────────────────────────────────────────────┘
+Comportamiento:
+-Cambios se aplican inmediatamente
+-Al pulsar "Volver", regresa a pantalla de mapa
+-Valores se persisten automáticamente
+ASI 8: Análisis de Consistencia y Especificación de Requisitos
+Matriz de Trazabilidad
++---------+---------------------------+-------------------+---------------------+------------+------------+
+| Req ID  | Requisito                 | Caso(s) de Uso    | Clase               | Interfaz   | Subsistema |
++---------+---------------------------+-------------------+---------------------+------------+------------+
+| RF-01   | Geolocalización del       | CU-01, CU-04      | -                   | IU-02      | SS-01      |
+|         | usuario                   |                   |                     |            |            |
++---------+---------------------------+-------------------+---------------------+------------+------------+
+| RF-02   | Visualización en mapa     | CU-01             | Gasolinera          | IU-02      | SS-03      |
++---------+---------------------------+-------------------+---------------------+------------+------------+
+| RF-03   | Filtro por combustible    | CU-02             | TipoCombustible     | IU-02      | SS-04      |
++---------+---------------------------+-------------------+---------------------+------------+------------+
+| RF-04   | Consumo de API oficial    | CU-01             | Gasolinera, Precio  | -          | SS-02      |
++---------+---------------------------+-------------------+---------------------+------------+------------+
+| RF-05   | Tarjeta informativa       | CU-01             | Gasolinera          | IU-02      | SS-03      |
++---------+---------------------------+-------------------+---------------------+------------+------------+
+| RF-06   | Configuración de          | CU-03             | Configuracion       | IU-03      | SS-05      |
+|         | preferencias              |                   |                     |            |            |
++---------+---------------------------+-------------------+---------------------+------------+------------+
+| RF-07   | Actualización automática  | -                 | -                   | -          | SS-02      |
++---------+---------------------------+-------------------+---------------------+------------+------------+
+| RF-08   | Pantalla de inicio        | CU-01             | -                   | IU-01      | SS-06      |
++---------+---------------------------+-------------------+---------------------+------------+------------+
+Validación de Completitud
+-Todos los requisitos funcionales están cubiertos por casos de uso
+-Todos los casos de uso tienen interfaces asociadas
+-Todas las clases de dominio están representadas en el modelo de datos
+-Todos los subsistemas tienen responsabilidades claras
+DSI - Diseño del Sistema de Información
+DSI 1: Definición de la Arquitectura del Sistema
+Arquitectura General
+Patrón Arquitectónico: Capas + Repository Pattern
++────────────────────────────────────────────────────────────────+
+|                      ARQUITECTURA GENERAL                      |
++────────────────────────────────────────────────────────────────+
+
+        +----------------------+         +----------------------+
+        |  CAPA DE PRESENTACIÓN|         |      SERVICIOS       |
+        | (Widgets, Screens,   |<--------| (location, maps,     |
+        |  UI Logic, temas)    |         |  storage, sync)      |
+        +----------+-----------+         +----------+-----------+
+                   |                                ^
+                   | usa / muestra                  |
+                   v                                |
+        +----------------------+                    |
+        | CAPA DE LÓGICA DE    |--------------------+
+        | NEGOCIO              |
+        | (BLoC/Provider,      |
+        |  Use Cases, reglas)  |
+        +----------+-----------+
+                   |
+                   | solicita / orquesta
+                   v
+        +----------------------+    <-------------------------------+
+        |     CAPA DE DATOS    |                                    |
+        | (Repositories, DTOs, |                                    |
+        |  Mappers, Cache)     |                                    |
+        +----+----------+------+
+             |          |
+  obtiene    v          v  persiste/lee
+  datos +-----------+  +-------------+
+        | API REMOTA|  |  BD LOCAL   |
+        | (Gobierno)|  |(SQLite/Hive)|
+        +-----------+  +-------------+
+Leyenda breve:
+-CAPA DE PRESENTACIÓN: pantallas, widgets, selector de combustible, mapa.
+-CAPA DE LÓGICA DE NEGOCIO: BLoC/Provider, casos de uso (getNearby, filter, calcDistance).
+-CAPA DE DATOS: repositorios que combinan API remota y caché local.
+-API REMOTA: endpoint oficial de precios del gobierno.
+-BD LOCAL: caché de estaciones y precios para consultas offline/rápidas.
+-SERVICIOS: componentes del sistema (geolocalización, cliente HTTP, gestor de sincronización).
+
+Componentes Arquitectónicos
+1. Presentación
+- `screens/`: Pantallas de la aplicación
+  - `splash_screen.dart`
+  - `map_screen.dart`
+  - `settings_screen.dart`
+- `widgets/`: Componentes reutilizables
+  - `gas_station_marker.dart`
+  - `info_card.dart`
+  - `fuel_selector.dart`
+
+2. Lógica de Negocio
+-`blocs/` o `providers/`:
+   `map_bloc.dart`: Estado del mapa y marcadores
+   `settings_bloc.dart`: Configuración de usuario
+   `fuel_bloc.dart`: Gestión de datos de gasolineras
+-`use_cases/`:
+   `get_nearby_stations.dart`
+   `filter_by_fuel_type.dart`
+   `calculate_distance.dart`
+
+3. Datos
+-`repositories/`:
+   `gas_station_repository.dart`: Interfaz abstracta
+   `gas_station_repository_impl.dart`: Implementación
+-`data_sources/`:
+   `remote/api_data_source.dart`
+   `local/database_data_source.dart`
+-`models/`:
+   `gas_station_model.dart`
+   `price_model.dart`
+
+4. Servicios
+-`services/`:
+   `location_service.dart`: GPS y permisos
+   `api_service.dart`: Cliente HTTP
+   `storage_service.dart`: SharedPreferences
+   `database_service.dart`: SQLite/Hive
+
+DSI 2: Diseño de la Arquitectura de Módulos del Sistema
+Módulos Principales
+Módulo 1: Core
+-Configuración global.
+-Constantes.
+-Utilidades comunes.
+-Gestión de temas.
+
+Módulo 2: Data
+-Modelos de datos.
+-Repositorios.
+-Data sources (API y local).
+-DTOs y mappers.
+
+Módulo 3: Domain
+- Entidades de negocio.
+- Casos de uso.
+- Interfaces de repositorios.
+- Reglas de negocio.
+
+Módulo 4: Presentation
+-Screens.
+-Widgets.
+-State management (BLoC/Provider).
+-Navegación.
+
+Módulo 5: Services
+-Servicios de terceros.
+-Servicios del sistema (GPS, almacenamiento).
+
+Diagrama de Dependencias
+┌───────────────┐
+│ Presentation  │
+└───────┬───────┘
+        │ depende
+        ▼
+┌───────────────┐      ┌──────────┐
+│    Domain     │◄─────│   Core   │
+└───────┬───────┘      └──────────┘
+        │ depende          ▲
+        ▼                  │
+┌───────────────┐          │
+│     Data      │──────────┘
+└───────┬───────┘
+        │ depende
+        ▼
+┌───────────────┐
+│   Services    │
+└───────────────┘
+DSI 3: Diseño de Casos de Uso Reales
+Diseño Detallado CU-01: Localizar Gasolinera Más Barata
+Secuencia de Llamadas:
+Usuario
+  |
+MapScreen
+  |
+MapBloc
+  |
+GetNearbyStationsUseCase
+  |
+GasStationRepository
+  |---> ApiDataSource -> API Gobierno
+  |
+  |---> DatabaseDataSource (caché)
+  |
+Lista de Gasolineras
+  |
+MapBloc
+  |
+CalculateDistanceUseCase
+  |
+FilterByFuelTypeUseCase
+  |
+MapBloc emite nuevo estado
+  |
+MapScreen reconstruye marcadores actualizados
+
+Pseudocódigo:
+// MapBloc
+void loadNearbyStations() async {
+  emit(LoadingState());
+  
+  // 1. Obtener ubicación
+  Position position = await locationService.getCurrentPosition();
+  
+  // 2. Obtener gasolineras
+  try {
+    List<GasStation> stations = await getNearbyStationsUseCase(
+      latitude: position.latitude,
+      longitude: position.longitude,
+      radiusKm: settings.searchRadius
+    );
+    
+    // 3. Filtrar por combustible
+    stations = filterByFuelTypeUseCase(
+      stations: stations,
+      fuelType: settings.preferredFuel
+    );
+    
+    // 4. Calcular distancias y ordenar
+    for (var station in stations) {
+      station.distance = calculateDistanceUseCase(
+        position.latitude,
+        position.longitude,
+        station.latitude,
+        station.longitude
+      );
+    }
+    
+    // 5. Clasificar por precio
+    stations = classifyByPriceRange(stations);
+    
+    emit(LoadedState(stations: stations));
+  } catch (e) {
+    emit(ErrorState(message: e.toString()));
+  }
+}
+DSI 4: Diseño de Clases
+Clase: GasStation (Entity)
+class GasStation {
+  final String id;
+  final String name;
+  final double latitude;
+  final double longitude;
+  final String address;
+  final String locality;
+  final String operator;
+  final List<FuelPrice> prices;
+  double? distance; // calculado dinámicamente
+  PriceRange? priceRange; // bajo, medio, alto
+  
+  GasStation({
+    required this.id,
+    required this.name,
+    required this.latitude,
+    required this.longitude,
+    this.address = '',
+    this.locality = '',
+    this.operator = '',
+    this.prices = const [],
+  });
+  
+  double? getPriceForFuel(FuelType fuelType) {
+    try {
+      return prices
+          .firstWhere((p) => p.fuelType == fuelType)
+          .value;
+    } catch (_) {
+      return null;
+    }
+  }
+  
+  bool isWithinRadius(double lat, double lon, double radiusKm) {
+    double distance = _calculateDistance(lat, lon);
+    return distance <= radiusKm;
+  }
+  
+  double _calculateDistance(double lat, double lon) {
+    // Fórmula de Haversine
+    const double earthRadiusKm = 6371.0;
+    
+    double dLat = _degreesToRadians(latitude - lat);
+    double dLon = _degreesToRadians(longitude - lon);
+    
+    double a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(_degreesToRadians(lat)) *
+        cos(_degreesToRadians(latitude)) *
+        sin(dLon / 2) * sin(dLon / 2);
+    
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    
+    return earthRadiusKm * c;
+  }
+  
+  double _degreesToRadians(double degrees) {
+    return degrees * pi / 180;
+  }
+}
+
+Clase: FuelPrice (Value Object)
+class FuelPrice {
+  final FuelType fuelType;
+  final double value; // euros por litro
+  final DateTime updatedAt;
+  
+  const FuelPrice({
+    required this.fuelType,
+    required this.value,
+    required this.updatedAt,
+  });
+  
+  bool isOlderThan(Duration duration) {
+    return DateTime.now().difference(updatedAt) > duration;
+  }
+}
+
+Clase: AppSettings (Entity)
+class AppSettings {
+  int searchRadius; // 5, 10, 20, 50
+  FuelType preferredFuel;
+  bool darkMode;
+  DateTime? lastUpdateTimestamp;
+  
+  AppSettings({
+    this.searchRadius = 10,
+    this.preferredFuel = FuelType.gasolina95,
+    this.darkMode = false,
+    this.lastUpdateTimestamp,
+  });
+  
+  Future<void> save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('searchRadius', searchRadius);
+    await prefs.setString('preferredFuel', preferredFuel.toString());
+    await prefs.setBool('darkMode', darkMode);
+  }
+  
+  static Future<AppSettings> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    return AppSettings(
+      searchRadius: prefs.getInt('searchRadius') ?? 10,
+      preferredFuel: FuelType.values.firstWhere(
+        (e) => e.toString() == prefs.getString('preferredFuel'),
+        orElse: () => FuelType.gasolina95,
+      ),
+      darkMode: prefs.getBool('darkMode') ?? false,
+    );
+  }
+}
+
+Enumeraciones
+enum FuelType {
+  gasolina95,
+  dieselGasoleoA;
+  
+  String get displayName {
+    switch (this) {
+      case FuelType.gasolina95:
+        return 'Gasolina 95';
+      case FuelType.dieselGasoleoA:
+        return 'Diésel Gasóleo A';
+    }
+  }
+}
+
+enum PriceRange {
+  low,    // verde
+  medium, // amarillo
+  high;   // rojo
+  
+  Color get color {
+    switch (this) {
+      case PriceRange.low:
+        return Colors.green;
+      case PriceRange.medium:
+        return Colors.orange;
+      case PriceRange.high:
+        return Colors.red;
+    }
+  }
+}
+
+DSI 5: Diseño de la Arquitectura de Datos
+Esquema de Base de Datos Local (SQLite)
+Tabla de gasolineras
+CREATE TABLE gas_stations (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    address TEXT,
+    locality TEXT,
+    operator TEXT,
+    cached_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_location (latitude, longitude)
+);
+
+Tabla de precios
+CREATE TABLE fuel_prices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    station_id TEXT NOT NULL,
+    fuel_type TEXT NOT NULL,
+    price REAL NOT NULL,
+    updated_at DATETIME NOT NULL,
+    FOREIGN KEY (station_id) REFERENCES gas_stations(id) ON DELETE CASCADE,
+    UNIQUE(station_id, fuel_type)
+);
+
+Tabla de configuración (singleton)
+CREATE TABLE app_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    search_radius INTEGER NOT NULL DEFAULT 10,
+    preferred_fuel TEXT NOT NULL DEFAULT 'gasolina95',
+    dark_mode INTEGER NOT NULL DEFAULT 0,
+    last_api_sync DATETIME
+);
+
+Insertar configuración por defecto
+INSERT INTO app_settings (id) VALUES (1);
+
+Modelo de Datos API (Gobierno)
+Endpoint esperado:
+GET https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/
+
+Estructura JSON de Respuesta (simplificada):
+{
+  "Fecha": "10/11/2025 08:30:00",
+  "ListaEESSPrecio": [
+    {
+      "IDEESS": "1234",
+      "Rótulo": "REPSOL",
+      "Dirección": "AVENIDA PRINCIPAL 123",
+      "Localidad": "MADRID",
+      "Latitud": "40.416775",
+      "Longitud (WGS84)": "-3.703790",
+      "Precio Gasolina 95 E5": "1,459",
+      "Precio Gasoleo A": "1,389"
+    }
+  ]
+}
+
+Modelo DTO:
+class ApiGasStationResponse {
+  final String fecha;
+  final List<ApiGasStationDTO> listaEESSPrecio;
+  
+  factory ApiGasStationResponse.fromJson(Map<String, dynamic> json) {
+    return ApiGasStationResponse(
+      fecha: json['Fecha'],
+      listaEESSPrecio: (json['ListaEESSPrecio'] as List)
+          .map((e) => ApiGasStationDTO.fromJson(e))
+          .toList(),
+    );
+  }
+}
+
+class ApiGasStationDTO {
+  final String ideess;
+  final String rotulo;
+  final String direccion;
+  final String localidad;
+  final String latitud;
+  final String longitud;
+  final String? precioGasolina95;
+  final String? precioDiesel;
+  
+  factory ApiGasStationDTO.fromJson(Map<String, dynamic> json) {
+    return ApiGasStationDTO(
+      ideess: json['IDEESS'] ?? '',
+      rotulo: json['Rótulo'] ?? '',
+      direccion: json['Dirección'] ?? '',
+      localidad: json['Localidad'] ?? '',
+      latitud: json['Latitud'] ?? '0',
+      longitud: json['Longitud (WGS84)'] ?? '0',
+      precioGasolina95: json['Precio Gasolina 95 E5'],
+      precioDiesel: json['Precio Gasoleo A'],
+    );
+  }
+  
+  // Mapper a entidad de dominio
+  GasStation toDomain() {
+    List<FuelPrice> prices = [];
+    
+    if (precioGasolina95 != null) {
+      double? price = _parsePrice(precioGasolina95!);
+      if (price != null) {
+        prices.add(FuelPrice(
+          fuelType: FuelType.gasolina95,
+          value: price,
+          updatedAt: DateTime.now(),
+        ));
+      }
+    }
+    
+    if (precioDiesel != null) {
+      double? price = _parsePrice(precioDiesel!);
+      if (price != null) {
+        prices.add(FuelPrice(
+          fuelType: FuelType.dieselGasoleoA,
+          value: price,
+          updatedAt: DateTime.now(),
+        ));
+      }
+    }
+    
+    return GasStation(
+      id: ideess,
+      name: rotulo,
+      latitude: double.tryParse(latitud.replaceAll(',', '.')) ?? 0.0,
+      longitude: double.tryParse(longitud.replaceAll(',', '.')) ?? 0.0,
+      address: direccion,
+      locality: localidad,
+      operator: rotulo,
+      prices: prices,
+    );
+  }
+  
+  double? _parsePrice(String priceStr) {
+    try {
+      return double.parse(priceStr.replaceAll(',', '.'));
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+DSI 6: Diseño de Procesos
+Proceso: Actualización Periódica de Datos
+Estrategia:
+-Timer periódico cada 30 minutos en foreground.
+-WorkManager para actualizaciones en background (Android).
+
+Implementación:
+class DataSyncService {
+  Timer? _syncTimer;
+  final GasStationRepository _repository;
+  final Duration syncInterval = Duration(minutes: 30);
+  
+  void startPeriodicSync() {
+    _syncTimer = Timer.periodic(syncInterval, (_) {
+      _performSync();
+    });
+  }
+  
+  Future<void> _performSync() async {
+    try {
+      // 1. Verificar conectividad
+      if (!await _hasInternetConnection()) {
+        print('No internet, skipping sync');
+        return;
+      }
+      
+      // 2. Descargar datos frescos
+      List<GasStation> freshData = await _repository.fetchRemoteStations();
+      
+      // 3. Comparar con caché
+      List<GasStation> cachedData = await _repository.getCachedStations();
+      
+      if (_hasDataChanged(freshData, cachedData)) {
+        // 4. Actualizar base de datos local
+        await _repository.updateCache(freshData);
+        
+        // 5. Notificar a UI si está activa
+        _notifyDataUpdated();
+        
+        print('Data synced successfully at ${DateTime.now()}');
+      } else {
+        print('No changes detected');
+      }
+      
+    } catch (e) {
+      print('Sync error: $e');
+      // No interrumpir experiencia de usuario
+    }
+  }
+  
+  bool _hasDataChanged(List<GasStation> fresh, List<GasStation> cached) {
+    if (fresh.length != cached.length) return true;
+    
+    // Comparar precios de primeras 10 gasolineras
+    for (int i = 0; i < min(10, fresh.length); i++) {
+      if (fresh[i].prices != cached[i].prices) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  void stopPeriodicSync() {
+    _syncTimer?.cancel();
+  }
+}
+
+Proceso: Cálculo de Rangos de Precio
+Algoritmo:
+class PriceRangeCalculator {
+  static void assignPriceRanges(
+    List<GasStation> stations,
+    FuelType fuelType
+  ) {
+    // 1. Extraer todos los precios válidos
+    List<double> prices = stations
+        .map((s) => s.getPriceForFuel(fuelType))
+        .whereType<double>()
+        .toList();
+    
+    if (prices.isEmpty) return;
+    
+    // 2. Calcular percentiles
+    prices.sort();
+    int count = prices.length;
+    
+    double p33 = prices[(count * 0.33).floor()];
+    double p66 = prices[(count * 0.66).floor()];
+    
+    // 3. Asignar rangos
+    for (var station in stations) {
+      double? price = station.getPriceForFuel(fuelType);
+      if (price == null) continue;
+      
+      if (price <= p33) {
+        station.priceRange = PriceRange.low;
+      } else if (price <= p66) {
+        station.priceRange = PriceRange.medium;
+      } else {
+        station.priceRange = PriceRange.high;
+      }
+    }
+  }
+}
+
+DSI 7: Diseño de Interfaces
+Widget: GasStationMarker
+class GasStationMarker extends StatelessWidget {
+  final GasStation station;
+  final FuelType selectedFuel;
+  final VoidCallback onTap;
+  
+  const GasStationMarker({
+    required this.station,
+    required this.selectedFuel,
+    required this.onTap,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    double? price = station.getPriceForFuel(selectedFuel);
+    Color markerColor = station.priceRange?.color ?? Colors.grey;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          // Precio destacado
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: markerColor,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              price != null ? '${price.toStringAsFixed(3)} €' : 'N/A',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          // Icono de surtidor
+          Icon(
+            Icons.local_gas_station,
+            color: markerColor,
+            size: 32,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Widget: InfoCard (Tarjeta Flotante)
+class StationInfoCard extends StatelessWidget {
+  final GasStation station;
+  final FuelType selectedFuel;
+  
+  const StationInfoCard({
+    required this.station,
+    required this.selectedFuel,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    double? price = station.getPriceForFuel(selectedFuel);
+    
+    return Card(
+      elevation: 8,
+      margin: EdgeInsets.all(16),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              station.name,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              station.address,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+            SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${selectedFuel.displayName}:',
+                  style: TextStyle(fontSize: 16),
+                ),
+                Text(
+                  price != null ? '${price.toStringAsFixed(3)} €/L' : 'N/A',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: station.priceRange?.color,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.location_on, size: 16, color: Colors.grey),
+                SizedBox(width: 4),
+                Text(
+                  station.distance != null
+                      ? '${station.distance!.toStringAsFixed(1)} km'
+                      : '',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+DSI 8: Especificación de la Construcción
+Estructura de Directorios
+lib/
+├── main.dart
+├── core/
+│   ├── constants/
+│   │   ├── api_constants.dart
+│   │   └── app_constants.dart
+│   ├── theme/
+│   │   ├── app_theme.dart
+│   │   └── colors.dart
+│   └── utils/
+│       ├── distance_calculator.dart
+│       └── price_formatter.dart
+├── data/
+│   ├── datasources/
+│   │   ├── local/
+│   │   │   └── database_datasource.dart
+│   │   └── remote/
+│   │       └── api_datasource.dart
+│   ├── models/
+│   │   ├── gas_station_model.dart
+│   │   ├── fuel_price_model.dart
+│   │   └── api_response_model.dart
+│   └── repositories/
+│       └── gas_station_repository_impl.dart
+├── domain/
+│   ├── entities/
+│   │   ├── gas_station.dart
+│   │   ├── fuel_price.dart
+│   │   └── app_settings.dart
+│   ├── repositories/
+│   │   └── gas_station_repository.dart
+│   └── usecases/
+│       ├── get_nearby_stations.dart
+│       ├── filter_by_fuel_type.dart
+│       └── calculate_distance.dart
+├── presentation/
+│   ├── blocs/
+│   │   ├── map/
+│   │   │   ├── map_bloc.dart
+│   │   │   ├── map_event.dart
+│   │   │   └── map_state.dart
+│   │   └── settings/
+│   │       ├── settings_bloc.dart
+│   │       ├── settings_event.dart
+│   │       └── settings_state.dart
+│   ├── screens/
+│   │   ├── splash_screen.dart
+│   │   ├── map_screen.dart
+│   │   └── settings_screen.dart
+│   └── widgets/
+│       ├── gas_station_marker.dart
+│       ├── info_card.dart
+│       └── fuel_selector.dart
+└── services/
+    ├── location_service.dart
+    ├── api_service.dart
+    ├── database_service.dart
+    └── sync_service.dart
+
+Dependencias (pubspec.yaml)
+name: BuscaGas
+description: Localizador de gasolineras económicas en España
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  flutter_bloc: ^8.1.3
+  
+  # Networking
+  http: ^1.1.0
+  dio: ^5.3.3
+  
+  # Local Storage
+  sqflite: ^2.3.0
+  shared_preferences: ^2.2.2
+  
+  # Maps
+  google_maps_flutter: ^2.5.0
+  
+  # Location
+  geolocator: ^10.1.0
+  permission_handler: ^11.0.1
+  
+  # Utilities
+  intl: ^0.18.1
+  equatable: ^2.0.5
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  mockito: ^5.4.2
+
+DSI 9: Diseño de Migración y Carga Inicial de Datos
+Estrategia de Primera Carga
+class InitialDataLoader {
+  final ApiDataSource _apiDataSource;
+  final DatabaseDataSource _databaseDataSource;
+  final AppSettings _settings;
+  
+  Future<void> performInitialLoad(BuildContext context) async {
+    try {
+      // 1. Verificar si es primera ejecución
+      bool isFirstRun = await _isFirstRun();
+      
+      if (isFirstRun) {
+        // 2. Mostrar diálogo de preferencia de tema
+        bool darkMode = await _showThemeDialog(context);
+        _settings.darkMode = darkMode;
+        await _settings.save();
+      }
+      
+      // 3. Solicitar permisos de ubicación
+      bool locationGranted = await _requestLocationPermission();
+      if (!locationGranted) {
+        throw Exception('Permisos de ubicación requeridos');
+      }
+      
+      // 4. Obtener ubicación actual
+      Position position = await Geolocator.getCurrentPosition();
+      
+      // 5. Descargar datos iniciales
+      List<GasStation> stations = await _apiDataSource.fetchAllStations();
+      
+      // 6. Guardar en base de datos local
+      await _databaseDataSource.insertBatch(stations);
+      
+      // 7. Registrar timestamp de sincronización
+      _settings.lastUpdateTimestamp = DateTime.now();
+      await _settings.save();
+      
+      // 8. Marcar como no primera ejecución
+      await _setFirstRunComplete();
+      
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  Future<bool> _isFirstRun() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('first_run') ?? true;
+  }
+  
+  Future<void> _setFirstRunComplete() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('first_run', false);
+  }
+  
+  Future<bool> _showThemeDialog(BuildContext context) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Preferencia de tema'),
+        content: Text('¿Prefieres modo claro u oscuro?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('☀️ Claro'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('🌙 Oscuro'),
+          ),
+        ],
+      ),
+    ) ?? false;
+  }
+  
+  Future<bool> _requestLocationPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    
+    return permission == LocationPermission.always ||
+           permission == LocationPermission.whileInUse;
+  }
+}
+
+CSI - Construcción del Sistema de Información
+CSI 1: Preparación del Entorno de Construcción
+Herramientas de Desarrollo
+IDE:
+-Visual Studio Code con extensiones Flutter
+-Pruebas en Android Studio
+
+SDK:
+-Flutter SDK 3.10+
+-Dart SDK 3.0+
+-Android SDK (API 23-34)
+
+Control de Versiones:
+-Git
+-Repositorio: GitHub/GitLab
+
+Gestión de Dependencias:
+-pub (gestor de paquetes de Dart)
+
+CSI 2: Generación del Código de los Componentes
+Implementación de Repositorio
+// domain/repositories/gas_station_repository.dart
+abstract class GasStationRepository {
+  Future<List<GasStation>> fetchRemoteStations();
+  Future<List<GasStation>> getCachedStations();
+  Future<void> updateCache(List<GasStation> stations);
+  Future<List<GasStation>> getNearbyStations({
+    required double latitude,
+    required double longitude,
+    required double radiusKm,
+  });
+}
+
+// data/repositories/gas_station_repository_impl.dart
+class GasStationRepositoryImpl implements GasStationRepository {
+  final ApiDataSource _apiDataSource;
+  final DatabaseDataSource _databaseDataSource;
+  
+  GasStationRepositoryImpl(this._apiDataSource, this._databaseDataSource);
+  
+  @override
+  Future<List<GasStation>> fetchRemoteStations() async {
+    try {
+      final apiResponse = await _apiDataSource.getStations();
+      return apiResponse.map((dto) => dto.toDomain()).toList();
+    } catch (e) {
+      throw Exception('Error fetching remote data: $e');
+    }
+  }
+  
+  @override
+  Future<List<GasStation>> getCachedStations() async {
+    return await _databaseDataSource.getAllStations();
+  }
+  
+  @override
+  Future<void> updateCache(List<GasStation> stations) async {
+    await _databaseDataSource.clearAll();
+    await _databaseDataSource.insertBatch(stations);
+  }
+  
+  @override
+  Future<List<GasStation>> getNearbyStations({
+    required double latitude,
+    required double longitude,
+    required double radiusKm,
+  }) async {
+    List<GasStation> allStations = await getCachedStations();
+    
+    return allStations.where((station) {
+      return station.isWithinRadius(latitude, longitude, radiusKm);
+    }).toList();
+  }
+}
+
+Implementación de BLoC
+// presentation/blocs/map/map_event.dart
+abstract class MapEvent extends Equatable {
+  const MapEvent();
+  @override
+  List<Object?> get props => [];
+}
+
+class LoadMapData extends MapEvent {
+  final double latitude;
+  final double longitude;
+  
+  const LoadMapData({required this.latitude, required this.longitude});
+  
+  @override
+  List<Object?> get props => [latitude, longitude];
+}
+
+// presentation/blocs/map/map_event.dart
+class ChangeFuelType extends MapEvent {
+  final FuelType fuelType;
+  const ChangeFuelType({required this.fuelType});
+  @override
+  List<Object?> get props => [fuelType];
+}
+
+class RecenterMap extends MapEvent {}
+
+// map_state.dart
+abstract class MapState extends Equatable {
+  const MapState();
+  @override
+  List<Object?> get props => [];
+}
+
+class MapLoading extends MapState {}
+
+class MapLoaded extends MapState {
+  final List<GasStation> stations;
+  final FuelType currentFuel;
+  
+  const MapLoaded({required this.stations, required this.currentFuel});
+  @override
+  List<Object?> get props => [stations, currentFuel];
+}
+
+class MapError extends MapState {
+  final String message;
+  const MapError({required this.message});
+  @override
+  List<Object?> get props => [message];
+}
+
+// map_bloc.dart
+class MapBloc extends Bloc<MapEvent, MapState> {
+  final GetNearbyStationsUseCase _getNearbyStations;
+  final AppSettings _settings;
+  
+  MapBloc(this._getNearbyStations, this._settings) : super(MapLoading()) {
+    on<LoadMapData>(_onLoadMapData);
+    on<ChangeFuelType>(_onChangeFuelType);
+    on<RecenterMap>(_onRecenterMap);
+  }
+  
+  Future<void> _onLoadMapData(LoadMapData event, Emitter<MapState> emit) async {
+    emit(MapLoading());
+    try {
+      final stations = await _getNearbyStations(
+        latitude: event.latitude,
+        longitude: event.longitude,
+        radiusKm: _settings.searchRadius.toDouble(),
+        fuelType: _settings.preferredFuel,
+      );
+      emit(MapLoaded(stations: stations, currentFuel: _settings.preferredFuel));
+    } catch (e) {
+      emit(MapError(message: e.toString()));
+    }
+  }
+  
+  Future<void> _onChangeFuelType(ChangeFuelType event, Emitter<MapState> emit) async {
+    if (state is MapLoaded) {
+      final currentState = state as MapLoaded;
+      emit(MapLoaded(stations: currentState.stations, currentFuel: event.fuelType));
+    }
+  }
+}
+
+Pantalla Principal
+// screens/map_screen.dart
+class MapScreen extends StatefulWidget {
+  @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  GoogleMapController? _mapController;
+  Position? _currentPosition;
+  GasStation? _selectedStation;
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('BuscaGas'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+          ),
+        ],
+      ),
+      body: BlocBuilder<MapBloc, MapState>(
+        builder: (context, state) {
+          if (state is MapLoading) {
+            return Center(child: CircularProgressIndicator());
+          }
+          
+          if (state is MapError) {
+            return Center(child: Text('Error: ${state.message}'));
+          }
+          
+          if (state is MapLoaded) {
+            return Stack(
+              children: [
+                GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+                    zoom: 13,
+                  ),
+                  markers: _buildMarkers(state.stations, state.currentFuel),
+                  myLocationEnabled: true,
+                  onMapCreated: (controller) => _mapController = controller,
+                ),
+                _buildFuelSelector(state.currentFuel),
+                if (_selectedStation != null)
+                  Positioned(
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    child: StationInfoCard(
+                      station: _selectedStation!,
+                      selectedFuel: state.currentFuel,
+                    ),
+                  ),
+                _buildRecenterButton(),
+              ],
+            );
+          }
+          
+          return SizedBox();
+        },
+      ),
+    );
+  }
+}
+
+CSI 3: Ejecución de las Pruebas Unitarias
+Pruebas de Casos de Uso
+
+// test/domain/usecases/get_nearby_stations_test.dart
+void main() {
+  late GetNearbyStationsUseCase useCase;
+  late MockGasStationRepository mockRepository;
+  
+  setUp(() {
+    mockRepository = MockGasStationRepository();
+    useCase = GetNearbyStationsUseCase(mockRepository);
+  });
+  
+  test('debe retornar lista de gasolineras dentro del radio', () async {
+    // Arrange
+    final mockStations = [
+      GasStation(id: '1', name: 'Test', latitude: 40.4, longitude: -3.7, prices: []),
+    ];
+    when(mockRepository.getNearbyStations(any, any, any))
+        .thenAnswer((_) async => mockStations);
+    
+    // Act
+    final result = await useCase(latitude: 40.4, longitude: -3.7, radiusKm: 10);
+    
+    // Assert
+    expect(result, mockStations);
+    verify(mockRepository.getNearbyStations(any, any, any)).called(1);
+  });
+}
+
+Pruebas de Cálculo de Distancia
+test('debe calcular distancia correctamente con fórmula Haversine', () {
+  final station = GasStation(
+    id: '1', name: 'Test',
+    latitude: 40.416775, longitude: -3.703790,
+    prices: [],
+  );
+  
+  final distance = station.calculateDistance(40.420000, -3.700000);
+  
+  expect(distance, closeTo(0.4, 0.1)); // ~0.4 km con margen
+});
+
+Criterios de Aceptación:
+-Todas las pruebas deben pasar en CI/CD
+
+CSI 4: Ejecución de las Pruebas de Integración
+Prueba de Integración API
+test('debe descargar y parsear datos reales de la API', () async {
+  final apiDataSource = ApiDataSource();
+  
+  final stations = await apiDataSource.getStations();
+  
+  expect(stations, isNotEmpty);
+  expect(stations.first.id, isNotNull);
+  expect(stations.first.latitude, isNotNull);
+  expect(stations.first.prices, isNotEmpty);
+});
+```
+
+Prueba de Integración Base de Datos
+test('debe guardar y recuperar gasolineras de SQLite', () async {
+  final db = await DatabaseDataSource.initialize();
+  
+  final station = GasStation(
+    id: 'test123',
+    name: 'Test Station',
+    latitude: 40.4,
+    longitude: -3.7,
+    prices: [FuelPrice(fuelType: FuelType.gasolina95, value: 1.45, updatedAt: DateTime.now())],
+  );
+  
+  await db.insert(station);
+  final retrieved = await db.getById('test123');
+  
+  expect(retrieved?.name, 'Test Station');
+  expect(retrieved?.prices.length, 1);
+});
+```
+
+Escenarios de Integración:
+-API → Repository → Base de Datos
+-BLoC → Repository → UI
+-Servicio de ubicación → MapBloc → Vista de mapa
+
+RESUMEN EJECUTIVO
+Proyecto BuscaGas es un sistema de información móvil diseñado según Métrica v3 que permite a conductores españoles localizar las gasolineras más económicas en tiempo real mediante datos oficiales gubernamentales.
+
+Alcance MVP:
+-Mapa interactivo con geolocalización.
+-Filtrado por tipo de combustible (Gasolina 95, Diésel).
+-Código de color por rango de precios.
+-Configuración básica y temas claro/oscuro.
+-Actualización automática de datos.
+
+Tecnología:
+-Framework: Flutter/Dart.
+-Plataforma inicial: Android (API 23+).
+-Arquitectura: Clean Architecture con BLoC.
+-Fuente de datos: API pública del Gobierno de España.
+
+Métricas de Éxito:
+-Carga inicial < 3 segundos.
+-Búsqueda efectiva < 10 segundos.
+-Precisión 100% vs. fuente oficial.
+
+FIN DE LA DOCUMENTACIÓN MÉTRICA V3
