@@ -23,7 +23,7 @@ class LocationService {
     // 1. Verificar si el servicio de ubicación está habilitado
     bool serviceEnabled = await isLocationServiceEnabled();
     if (!serviceEnabled) {
-      throw LocationServiceDisabledException();
+      throw const LocationServiceDisabledException();
     }
     
     // 2. Verificar permisos
@@ -32,7 +32,7 @@ class LocationService {
       // Intentar solicitar permisos
       bool granted = await requestLocationPermission();
       if (!granted) {
-        throw PermissionDeniedException('Permisos de ubicación denegados');
+        throw const PermissionDeniedException('Permisos de ubicación denegados');
       }
     }
     
