@@ -7,6 +7,7 @@ import '../../../domain/entities/app_settings.dart';
 import '../../../domain/entities/gas_station.dart';
 import '../../../domain/entities/fuel_type.dart';
 import '../../../domain/entities/price_range.dart';
+import '../../../services/location_service.dart';
 import 'map_event.dart';
 import 'map_state.dart';
 
@@ -16,16 +17,19 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final FilterByFuelTypeUseCase _filterByFuelType;
   final CalculateDistanceUseCase _calculateDistance;
   final AppSettings _settings;
+  final LocationService _locationService;
   
   MapBloc({
     required GetNearbyStationsUseCase getNearbyStations,
     required FilterByFuelTypeUseCase filterByFuelType,
     required CalculateDistanceUseCase calculateDistance,
     required AppSettings settings,
+    required LocationService locationService,
   })  : _getNearbyStations = getNearbyStations,
         _filterByFuelType = filterByFuelType,
         _calculateDistance = calculateDistance,
         _settings = settings,
+        _locationService = locationService,
         super(const MapInitial()) {
     // Registrar handlers para cada evento
     on<LoadMapData>(_onLoadMapData);
@@ -122,23 +126,18 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     Emitter<MapState> emit,
   ) async {
     try {
-      // 1. Verificar permisos
-      bool hasPermission = await _checkLocationPermission();
-      if (!hasPermission) {
-        emit(const MapLocationPermissionDenied());
-        return;
-      }
+      // Usar el servicio de ubicación
+      Position position = await _locationService.getCurrentPosition();
       
-      // 2. Obtener ubicación actual
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      
-      // 3. Recargar datos con nueva ubicación
+      // Recargar datos con nueva ubicación
       add(LoadMapData(
         latitude: position.latitude,
         longitude: position.longitude,
       ));
+    } on LocationServiceDisabledException {
+      emit(const MapError(message: 'Servicio de ubicación deshabilitado. Por favor, activa el GPS.'));
+    } on PermissionDeniedException {
+      emit(const MapLocationPermissionDenied());
     } catch (e) {
       emit(MapError(message: 'Error al obtener ubicación: ${e.toString()}'));
     }
@@ -192,18 +191,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       latitude: currentState.currentLatitude,
       longitude: currentState.currentLongitude,
     ));
-  }
-  
-  /// Método auxiliar: Verificar permisos de ubicación
-  Future<bool> _checkLocationPermission() async {
-    LocationPermission permission = await Geolocator.checkPermission();
-    
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    
-    return permission == LocationPermission.whileInUse ||
-           permission == LocationPermission.always;
   }
   
   /// Método auxiliar: Clasificar gasolineras por rango de precio
