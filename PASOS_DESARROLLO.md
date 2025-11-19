@@ -87,17 +87,29 @@ No hay errores de compilación
 
 Solo advertencias menores de estilo (prefer_const_constructors, avoid_print)
 
-### Paso 12: Desarrollar pantalla principal con mapa
+### Paso 12: Desarrollar pantalla principal con mapa ✅
 - Integrar Google Maps
 - Implementar marcadores personalizados con colores
 - Crear tarjeta flotante de información
 - Añadir selector de combustible
 
-### Paso 13: Crear pantalla de configuración
+### Paso 13: Crear pantalla de configuración ✅ COMPLETADO
 - Diseñar formulario de preferencias
 - Implementar controles para radio de búsqueda
 - Añadir selector de combustible preferido
 - Implementar toggle de tema
+
+**Estado:** ✅ Completado el 19 de noviembre de 2025
+- Documentación: PASO_13_INSTRUCCIONES.md
+- Resumen: PASO_13_COMPLETADO.md
+- Implementación: lib/presentation/screens/settings_screen.dart (332 líneas)
+- Funcionalidades:
+  * Radio de búsqueda (5, 10, 20, 50 km) con RadioListTile
+  * Combustible preferido (Gasolina 95, Diésel) con DropdownButton
+  * Tema claro/oscuro con Switch y actualización en tiempo real
+  * Guardado automático en SQLite
+  * Feedback visual con SnackBar
+  * Integración completa con main.dart para actualización de tema
 
 ### Paso 14: Implementar widgets reutilizables
 - Widget de marcador de gasolinera
