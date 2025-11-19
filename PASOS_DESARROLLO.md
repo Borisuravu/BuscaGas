@@ -74,6 +74,19 @@
 - Implementar diálogo de selección de tema (primera vez)
 - Añadir lógica de carga inicial
 
+⚠️ Notas Importantes:
+TODOs pendientes para futuros pasos:
+
+Cargar datos reales de gasolineras (requiere Pasos 4-6)
+Mostrar marcadores en el mapa
+Calcular distancias (Paso 7)
+Tarjeta de información interactiva
+El código actual es un MVP funcional que proporciona la estructura base
+
+No hay errores de compilación
+
+Solo advertencias menores de estilo (prefer_const_constructors, avoid_print)
+
 ### Paso 12: Desarrollar pantalla principal con mapa
 - Integrar Google Maps
 - Implementar marcadores personalizados con colores
