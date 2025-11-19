@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:buscagas/core/constants/app_constants.dart';
 import 'package:buscagas/domain/entities/app_settings.dart';
 import 'package:buscagas/presentation/screens/map_screen.dart';
+import 'package:buscagas/services/database_service.dart';
 import 'package:buscagas/main.dart' as main_app;
 
 /// Pantalla de inicio (Splash Screen)
@@ -106,12 +107,26 @@ class _SplashScreenState extends State<SplashScreen> {
         await _setFirstRunComplete();
       }
       
-      // 4. Carga inicial (opcional en este paso)
+      // 4. Inicializar base de datos
+      try {
+        final dbService = DatabaseService();
+        await dbService.initialize();
+        debugPrint('✅ Base de datos inicializada');
+      } catch (e) {
+        debugPrint('❌ Error inicializando BD: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error al inicializar base de datos')),
+          );
+        }
+      }
+      
+      // 5. Carga inicial (opcional en este paso)
       // En este punto se podría cargar caché, verificar permisos, etc.
       // Por ahora solo esperamos para mostrar el logo
       await Future.delayed(const Duration(seconds: 1));
       
-      // 5. Navegar a MapScreen
+      // 6. Navegar a MapScreen
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MapScreen()),

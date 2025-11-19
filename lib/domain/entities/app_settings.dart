@@ -1,8 +1,9 @@
 /// Entidad de dominio: Configuración de la Aplicación
 library;
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 import 'package:buscagas/domain/entities/fuel_type.dart';
+import 'package:buscagas/services/database_service.dart';
 
 class AppSettings {
   int searchRadius; // 5, 10, 20, 50
@@ -18,43 +19,67 @@ class AppSettings {
   });
   
   Future<void> save() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('searchRadius', searchRadius);
-    await prefs.setString('preferredFuel', preferredFuel.name);
-    await prefs.setBool('darkMode', darkMode);
-    if (lastUpdateTimestamp != null) {
-      await prefs.setString('lastUpdateTimestamp', lastUpdateTimestamp!.toIso8601String());
+    try {
+      final dbService = DatabaseService();
+      
+      // Guardar en base de datos
+      await dbService.updateSearchRadius(searchRadius);
+      await dbService.updatePreferredFuel(preferredFuel);
+      await dbService.updateDarkMode(darkMode);
+      
+      debugPrint('✅ Configuración guardada en BD');
+    } catch (e) {
+      debugPrint('❌ Error guardando configuración en BD: $e');
     }
   }
   
   static Future<AppSettings> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    FuelType loadedFuel = FuelType.gasolina95;
-    final fuelName = prefs.getString('preferredFuel');
-    if (fuelName != null) {
-      try {
-        loadedFuel = FuelType.values.firstWhere((e) => e.name == fuelName);
-      } catch (_) {
-        loadedFuel = FuelType.gasolina95;
+    try {
+      final dbService = DatabaseService();
+      final settings = await dbService.getAppSettings();
+      
+      if (settings != null) {
+        // Cargar desde base de datos
+        FuelType fuelType = FuelType.gasolina95;
+        try {
+          fuelType = FuelType.values.firstWhere(
+            (e) => e.name == settings['preferred_fuel'],
+          );
+        } catch (_) {
+          fuelType = FuelType.gasolina95;
+        }
+        
+        DateTime? timestamp;
+        if (settings['last_api_sync'] != null) {
+          try {
+            timestamp = DateTime.parse(settings['last_api_sync'] as String);
+          } catch (_) {
+            timestamp = null;
+          }
+        }
+        
+        return AppSettings(
+          searchRadius: settings['search_radius'] as int? ?? 10,
+          preferredFuel: fuelType,
+          darkMode: (settings['dark_mode'] as int? ?? 0) == 1,
+          lastUpdateTimestamp: timestamp,
+        );
+      } else {
+        // Si no hay datos en BD, devolver valores por defecto
+        return AppSettings(
+          searchRadius: 10,
+          preferredFuel: FuelType.gasolina95,
+          darkMode: false,
+        );
       }
+    } catch (e) {
+      debugPrint('Error cargando configuración desde BD: $e');
+      // Fallback a valores por defecto
+      return AppSettings(
+        searchRadius: 10,
+        preferredFuel: FuelType.gasolina95,
+        darkMode: false,
+      );
     }
-    
-    DateTime? timestamp;
-    final timestampStr = prefs.getString('lastUpdateTimestamp');
-    if (timestampStr != null) {
-      try {
-        timestamp = DateTime.parse(timestampStr);
-      } catch (_) {
-        timestamp = null;
-      }
-    }
-    
-    return AppSettings(
-      searchRadius: prefs.getInt('searchRadius') ?? 10,
-      preferredFuel: loadedFuel,
-      darkMode: prefs.getBool('darkMode') ?? false,
-      lastUpdateTimestamp: timestamp,
-    );
   }
 }
