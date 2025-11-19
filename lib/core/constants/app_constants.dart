@@ -22,4 +22,22 @@ class AppConstants {
   
   // Sincronización
   static const Duration syncInterval = Duration(minutes: 30);
+  
+  // Configuración de API
+  static const int maxRetries = 3;
+  static const Duration retryDelay = Duration(seconds: 2);
+
+  // Validación de datos
+  static const double minValidLat = 35.0;
+  static const double maxValidLat = 44.0;
+  static const double minValidLon = -10.0;
+  static const double maxValidLon = 5.0;
+  static const double minValidPrice = 0.5;
+  static const double maxValidPrice = 3.0;
+
+  // Mensajes de error para usuario
+  static const String errorNoInternet = 'Sin conexión a internet';
+  static const String errorServerDown = 'Servidor no disponible';
+  static const String errorTimeout = 'La petición tardó demasiado';
+  static const String errorUnknown = 'Error inesperado';
 }
