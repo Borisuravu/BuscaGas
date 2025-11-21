@@ -135,9 +135,23 @@ Solo advertencias menores de estilo (prefer_const_constructors, avoid_print)
 
 ## FASE 5: FUNCIONALIDADES AVANZADAS
 
-### Paso 15: Implementar cálculo de rangos de precio
+### Paso 15: Implementar cálculo de rangos de precio ✅ COMPLETADO
 - Algoritmo de clasificación por percentiles
 - Asignación de colores a marcadores
+
+**Estado:** ✅ Completado el 21 de noviembre de 2025
+- Documentación: PASO_15_INSTRUCCIONES.md
+- Resumen: PASO_15_COMPLETADO.md
+- Implementación: lib/core/utils/price_range_calculator.dart (168 líneas)
+- Refactorización: lib/domain/usecases/assign_price_range.dart (35 líneas)
+- Pruebas: test/core/utils/price_range_calculator_test.dart (8 tests, 100% pass)
+- Funcionalidades:
+  * Cálculo de percentiles P33 y P66 con interpolación lineal
+  * Clasificación en 3 rangos: bajo (verde), medio (naranja), alto (rojo)
+  * Distribución uniforme ~33% en cada rango
+  * Métodos auxiliares: calculateStatistics(), countByRange()
+  * Manejo robusto de casos edge (lista vacía, precio único, precios iguales)
+- Validación: flutter analyze sin errores, flutter test 8/8 pass
 
 ### Paso 16: Añadir funcionalidad de recentrado
 - Botón de "Mi ubicación"
