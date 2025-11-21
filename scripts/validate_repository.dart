@@ -224,5 +224,5 @@ Future<void> main() async {
     print('  4. Revisa logs de errores');
   }
   
-  print('\n' + '=' * 48);
+  print('\n${'=' * 48}');
 }
