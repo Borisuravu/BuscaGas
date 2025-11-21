@@ -43,3 +43,5 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# Ignore local Android properties that contain machine-specific SDK paths and keys
+/android/local.properties
