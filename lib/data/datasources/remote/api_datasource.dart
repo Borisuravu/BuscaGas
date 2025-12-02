@@ -2,9 +2,17 @@
 library;
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:buscagas/data/models/api_response_model.dart';
 import 'package:buscagas/data/models/gas_station_model.dart';
+import 'package:buscagas/core/utils/performance_monitor.dart';
+
+// Función top-level para compute() - parseo en background
+List<GasStationModel> _parseGasStationsInBackground(Map<String, dynamic> json) {
+  final apiResponse = ApiGasStationResponse.fromJson(json);
+  return apiResponse.listaEESSPrecio;
+}
 
 class ApiDataSource {
   // URL base de la API gubernamental
@@ -20,33 +28,40 @@ class ApiDataSource {
   /// Obtener todas las estaciones de servicio desde la API
   Future<List<GasStationModel>> fetchAllStations() async {
     try {
-      // 1. Realizar petición GET
+      // 1. Realizar petición GET con compresión gzip
+      PerformanceMonitor.start('API Download');
       final response = await _client.get(
         Uri.parse(_baseUrl),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json; charset=UTF-8',
+          'Accept-Encoding': 'gzip', // Solicitar compresión gzip
         },
       ).timeout(
-        const Duration(seconds: 30),
+        const Duration(seconds: 60), // Aumentado a 60s por compresión
         onTimeout: () {
           throw ApiException(
-            'Timeout: La petición tardó más de 30 segundos',
+            'Timeout: La petición tardó más de 60 segundos',
             type: ApiErrorType.timeout,
           );
         },
       );
+      PerformanceMonitor.stop('API Download');
 
       // 2. Verificar código de estado HTTP
       if (response.statusCode == 200) {
-        // 3. Parsear respuesta JSON
+        // 3. Decodificar JSON en main thread
+        PerformanceMonitor.start('JSON Parse');
         final Map<String, dynamic> jsonData = json.decode(response.body);
+        PerformanceMonitor.stop('JSON Parse');
 
-        // 4. Crear objeto de respuesta
-        final apiResponse = ApiGasStationResponse.fromJson(jsonData);
+        // 4. Parsear en background thread (NO BLOQUEA UI)
+        PerformanceMonitor.start('Background Parse');
+        final stations = await compute(_parseGasStationsInBackground, jsonData);
+        PerformanceMonitor.stop('Background Parse');
 
-        // 5. Retornar lista de modelos
-        return apiResponse.listaEESSPrecio;
+        debugPrint('✅ ${stations.length} estaciones descargadas y parseadas');
+        return stations;
       } else if (response.statusCode == 404) {
         throw ApiException(
           'Endpoint no encontrado (404)',

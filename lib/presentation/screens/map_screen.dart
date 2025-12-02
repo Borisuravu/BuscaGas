@@ -30,11 +30,28 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   GoogleMapController? _mapController;
+  
+  // Caché de iconos de marcadores
+  final Map<double, BitmapDescriptor> _markerIcons = {};
+  bool _iconsInitialized = false;
 
   @override
   void initState() {
     super.initState();
+    _initializeMarkerIcons();
     _initializeMap();
+  }
+  
+  /// Inicializar iconos de marcadores (caché)
+  void _initializeMarkerIcons() {
+    if (_iconsInitialized) return;
+    
+    _markerIcons[BitmapDescriptor.hueGreen] = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
+    _markerIcons[BitmapDescriptor.hueOrange] = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange);
+    _markerIcons[BitmapDescriptor.hueRed] = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+    _markerIcons[BitmapDescriptor.hueAzure] = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+    
+    _iconsInitialized = true;
   }
 
   @override
@@ -253,13 +270,12 @@ class _MapScreenState extends State<MapScreen> {
     return stations.map((station) {
       final price = station.getPriceForFuel(fuelType);
       final color = station.priceRange?.color ?? Colors.grey;
+      final hue = _getMarkerHue(color);
 
       return Marker(
         markerId: MarkerId(station.id),
         position: LatLng(station.latitude, station.longitude),
-        icon: BitmapDescriptor.defaultMarkerWithHue(
-          _getMarkerHue(color),
-        ),
+        icon: _markerIcons[hue] ?? BitmapDescriptor.defaultMarker,
         infoWindow: InfoWindow(
           title: station.name,
           snippet: price != null

@@ -8,12 +8,19 @@ import 'dart:async';
 import 'dart:math' show min;
 import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:battery_plus/battery_plus.dart';
 import '../data/repositories/gas_station_repository_impl.dart';
 import '../domain/entities/gas_station.dart';
+import '../core/utils/performance_monitor.dart';
+import '../services/database_service.dart';
 
 class DataSyncService {
   final GasStationRepositoryImpl _repository;
+  final Connectivity _connectivity = Connectivity();
+  final Battery _battery = Battery();
+  final DatabaseService _databaseService = DatabaseService();
   Timer? _syncTimer;
+  bool _isInForeground = true;
 
   /// Intervalo de sincronización: 30 minutos
   final Duration syncInterval = const Duration(minutes: 30);
@@ -47,6 +54,18 @@ class DataSyncService {
     debugPrint('🛑 Sincronización periódica detenida');
   }
 
+  /// Método alias para compatibilidad
+  void start() => startPeriodicSync();
+
+  /// Método alias para compatibilidad
+  void stop() => stopPeriodicSync();
+
+  /// Notificar cambio de estado de app (foreground/background)
+  void setForegroundState(bool isForeground) {
+    _isInForeground = isForeground;
+    debugPrint('📱 App ${isForeground ? "foreground" : "background"}');
+  }
+
   /// Ejecutar sincronización manual
   ///
   /// Puede ser llamado manualmente o por el timer periódico
@@ -54,39 +73,71 @@ class DataSyncService {
     try {
       debugPrint('🔄 Iniciando sincronización...');
 
-      // 1. Verificar conectividad
+      // 1. Verificar estado de la app y conectividad
+      if (!_isInForeground) {
+        debugPrint('🔄 App en background - verificar WiFi');
+
+        // Solo sincronizar en WiFi cuando está en background
+        final connectivityResult = await _connectivity.checkConnectivity();
+        if (connectivityResult.first != ConnectivityResult.wifi) {
+          debugPrint('⚠️ No hay WiFi - cancelar sync en background');
+          return;
+        }
+      }
+
+      // 2. Verificar batería
+      final batteryLevel = await _battery.batteryLevel;
+      if (batteryLevel < 20) {
+        debugPrint('🔋 Batería baja ($batteryLevel%) - cancelar sync');
+        return;
+      }
+
+      // 3. Verificar conectividad general
       if (!await _hasInternetConnection()) {
-        debugPrint('⚠️  Sin conexión a internet, saltando sincronización');
+        debugPrint('📡 Sin conexión - cancelar sync');
         onSyncError?.call('Sin conexión a internet');
         return;
       }
 
-      // 2. Descargar datos frescos de la API
-      debugPrint('📥 Descargando datos frescos de la API...');
-      List<GasStation> freshData = await _repository.fetchRemoteStations();
-      debugPrint('✅ Descargados ${freshData.length} estaciones de la API');
+      // 4. Realizar sincronización
+      await PerformanceMonitor.measure('Sync', () async {
+        // Descargar datos frescos de la API
+        debugPrint('📥 Descargando datos frescos de la API...');
+        List<GasStation> freshData = await _repository.fetchRemoteStations();
+        debugPrint('✅ Descargados ${freshData.length} estaciones de la API');
 
-      // 3. Obtener caché actual
-      List<GasStation> cachedData = await _repository.getCachedStations();
-      debugPrint('📦 Caché actual: ${cachedData.length} estaciones');
+        // Obtener caché actual
+        List<GasStation> cachedData = await _repository.getCachedStations();
+        debugPrint('📦 Caché actual: ${cachedData.length} estaciones');
 
-      // 4. Comparar datos
-      if (_hasDataChanged(freshData, cachedData)) {
-        debugPrint('🔄 Cambios detectados, actualizando caché...');
+        // Comparar datos
+        if (_hasDataChanged(freshData, cachedData)) {
+          debugPrint('🔄 Cambios detectados, actualizando caché...');
 
-        // 5. Actualizar base de datos local
-        await _repository.updateCache(freshData);
+          // Actualizar base de datos local
+          await _repository.updateCache(freshData);
 
-        // 6. Notificar a UI si está activa
-        onDataUpdated?.call();
+          // Notificar a UI si está activa
+          onDataUpdated?.call();
 
-        debugPrint(
-            '✅ Sincronización completada exitosamente a las ${DateTime.now()}');
-      } else {
-        debugPrint('✓ No se detectaron cambios en los datos');
-      }
+          debugPrint(
+              '✅ Sync completado: ${freshData.length} estaciones a las ${DateTime.now()}');
+        } else {
+          debugPrint('ℹ️ Sin cambios en datos');
+        }
+
+        // 5. Optimizar BD semanalmente
+        final lastOptimization =
+            await _databaseService.getLastOptimizationTime();
+        if (lastOptimization == null ||
+            DateTime.now().difference(lastOptimization).inDays >= 7) {
+          debugPrint('🔧 Optimizando base de datos (semanal)...');
+          await _databaseService.optimizeDatabase();
+          await _databaseService.updateLastOptimizationTime();
+        }
+      });
     } catch (e) {
-      debugPrint('❌ Error durante sincronización: $e');
+      debugPrint('❌ Error sync: $e');
       onSyncError?.call('Error al sincronizar: $e');
       // No interrumpir experiencia de usuario
     }

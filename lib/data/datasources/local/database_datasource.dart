@@ -54,6 +54,18 @@ class DatabaseDataSource {
       CREATE INDEX idx_location ON gas_stations(latitude, longitude)
     ''');
 
+    // Índice compuesto para optimizar ORDER BY distance
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_lat_lon 
+      ON gas_stations(latitude DESC, longitude DESC)
+    ''');
+
+    // Índice para caché timestamp (optimizar queries de antigüedad)
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_cached_at 
+      ON gas_stations(cached_at DESC)
+    ''');
+
     // Tabla de precios
     await db.execute('''
       CREATE TABLE fuel_prices (
@@ -67,6 +79,12 @@ class DatabaseDataSource {
       )
     ''');
 
+    // Índice compuesto para consultas por combustible
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_geo_fuel 
+      ON fuel_prices(fuel_type, station_id)
+    ''');
+
     // Tabla de configuración (singleton)
     await db.execute('''
       CREATE TABLE app_settings (
@@ -74,7 +92,8 @@ class DatabaseDataSource {
         search_radius INTEGER NOT NULL DEFAULT 10,
         preferred_fuel TEXT NOT NULL DEFAULT 'gasolina95',
         dark_mode INTEGER NOT NULL DEFAULT 0,
-        last_api_sync TEXT
+        last_api_sync TEXT,
+        last_optimization TEXT
       )
     ''');
 
@@ -117,40 +136,67 @@ class DatabaseDataSource {
   /// Insertar múltiples gasolineras (batch)
   Future<void> insertBatch(List<GasStation> stations) async {
     final db = await database;
-    Batch batch = db.batch();
-
+    const int batchSize = 500;
+    
+    // Separar estaciones y precios para commits independientes
+    List<Map<String, dynamic>> stationMaps = [];
+    List<Map<String, dynamic>> priceMaps = [];
+    
+    final cachedAt = DateTime.now().toIso8601String();
+    
     for (var station in stations) {
-      batch.insert(
-        'gas_stations',
-        {
-          'id': station.id,
-          'name': station.name,
-          'latitude': station.latitude,
-          'longitude': station.longitude,
-          'address': station.address,
-          'locality': station.locality,
-          'operator': station.operator,
-          'cached_at': DateTime.now().toIso8601String(),
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      stationMaps.add({
+        'id': station.id,
+        'name': station.name,
+        'latitude': station.latitude,
+        'longitude': station.longitude,
+        'address': station.address,
+        'locality': station.locality,
+        'operator': station.operator,
+        'cached_at': cachedAt,
+      });
 
-      // Insertar precios
       for (var price in station.prices) {
-        batch.insert(
-          'fuel_prices',
-          {
-            'station_id': station.id,
-            'fuel_type': price.fuelType.name,
-            'price': price.value,
-            'updated_at': price.updatedAt.toIso8601String(),
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        priceMaps.add({
+          'station_id': station.id,
+          'fuel_type': price.fuelType.name,
+          'price': price.value,
+          'updated_at': price.updatedAt.toIso8601String(),
+        });
       }
     }
 
-    await batch.commit(noResult: true);
+    // Insertar estaciones en lotes de 500
+    for (int i = 0; i < stationMaps.length; i += batchSize) {
+      final end = (i + batchSize < stationMaps.length) ? i + batchSize : stationMaps.length;
+      final batch = db.batch();
+      
+      for (int j = i; j < end; j++) {
+        batch.insert(
+          'gas_stations',
+          stationMaps[j],
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+      
+      await batch.commit(noResult: true);
+    }
+
+    // Insertar precios en lotes de 500
+    for (int i = 0; i < priceMaps.length; i += batchSize) {
+      final end = (i + batchSize < priceMaps.length) ? i + batchSize : priceMaps.length;
+      final batch = db.batch();
+      
+      for (int j = i; j < end; j++) {
+        batch.insert(
+          'fuel_prices',
+          priceMaps[j],
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+      
+      await batch.commit(noResult: true);
+    }
   }
 
   /// Obtener todas las gasolineras con sus precios

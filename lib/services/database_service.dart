@@ -4,6 +4,7 @@ import 'package:buscagas/data/datasources/local/database_datasource.dart';
 import 'package:buscagas/domain/entities/gas_station.dart';
 import 'package:buscagas/domain/entities/fuel_price.dart';
 import 'package:buscagas/domain/entities/fuel_type.dart';
+import 'package:buscagas/core/utils/performance_monitor.dart';
 
 /// Servicio de base de datos SQLite
 ///
@@ -81,31 +82,102 @@ class DatabaseService {
     required double latitude,
     required double longitude,
     required double radiusKm,
+    FuelType? fuelType,
   }) async {
-    try {
-      final stations = await _dataSource.getStationsByLocation(
-        centerLat: latitude,
-        centerLon: longitude,
-        radiusKm: radiusKm,
-      );
+    return PerformanceMonitor.measure('getNearbyStations', () async {
+      try {
+        final db = await _dataSource.database;
 
-      // Calcular y asignar distancia a cada gasolinera
-      for (var station in stations) {
-        station.distance = _calculateDistance(
-          latitude,
-          longitude,
-          station.latitude,
-          station.longitude,
-        );
+        // 1. Calcular bounding box (mucho más rápido que Haversine en todos)
+        final latDelta = radiusKm / 111.0; // Aprox. 111 km por grado
+        final lonDelta = radiusKm / (111.0 * cos(latitude * pi / 180));
+
+        final minLat = latitude - latDelta;
+        final maxLat = latitude + latDelta;
+        final minLon = longitude - lonDelta;
+        final maxLon = longitude + lonDelta;
+
+        // 2. Query con bounding box (usa índices)
+        String query = '''
+          SELECT DISTINCT s.*, p.fuel_type, p.price, p.updated_at
+          FROM gas_stations s
+          INNER JOIN fuel_prices p ON s.id = p.station_id
+          WHERE s.latitude BETWEEN ? AND ?
+            AND s.longitude BETWEEN ? AND ?
+        ''';
+
+        List<dynamic> args = [minLat, maxLat, minLon, maxLon];
+
+        // 3. Filtrar por combustible si se especifica
+        if (fuelType != null) {
+          query += ' AND p.fuel_type = ?';
+          args.add(fuelType.toString().split('.').last);
+        }
+
+        // 4. Ejecutar query
+        final results = await db.rawQuery(query, args);
+
+        // 5. Convertir resultados
+        Map<String, GasStation> stationsMap = {};
+
+        for (var row in results) {
+          final stationId = row['id'] as String;
+
+          if (!stationsMap.containsKey(stationId)) {
+            stationsMap[stationId] = GasStation(
+              id: stationId,
+              name: row['name'] as String,
+              latitude: row['latitude'] as double,
+              longitude: row['longitude'] as double,
+              address: row['address'] as String? ?? '',
+              locality: row['locality'] as String? ?? '',
+              operator: row['operator'] as String? ?? '',
+              prices: [],
+            );
+          }
+
+          // Agregar precio
+          stationsMap[stationId]!.prices.add(
+            FuelPrice(
+              fuelType: _parseFuelType(row['fuel_type'] as String),
+              value: row['price'] as double,
+              updatedAt: DateTime.parse(row['updated_at'] as String),
+            ),
+          );
+        }
+
+        // 6. Calcular distancias reales solo para candidatos (no 11,000)
+        List<GasStation> stations = stationsMap.values.toList();
+        for (var station in stations) {
+          station.distance = _calculateDistance(
+            latitude,
+            longitude,
+            station.latitude,
+            station.longitude,
+          );
+        }
+
+        // 7. Filtrar por radio exacto y ordenar
+        stations = stations.where((s) => s.distance! <= radiusKm).toList();
+        stations.sort((a, b) => a.distance!.compareTo(b.distance!));
+
+        return stations;
+      } catch (e) {
+        debugPrint('Error getNearbyStations: $e');
+        return [];
       }
+    });
+  }
 
-      // Ordenar por distancia
-      stations.sort((a, b) => (a.distance ?? 0).compareTo(b.distance ?? 0));
-
-      return stations;
-    } catch (e) {
-      debugPrint('Error obteniendo gasolineras cercanas: $e');
-      return [];
+  /// Parsear string de tipo de combustible a enum
+  FuelType _parseFuelType(String fuelTypeStr) {
+    switch (fuelTypeStr) {
+      case 'gasolina95':
+        return FuelType.gasolina95;
+      case 'dieselGasoleoA':
+        return FuelType.dieselGasoleoA;
+      default:
+        return FuelType.gasolina95;
     }
   }
 
@@ -225,6 +297,53 @@ class DatabaseService {
     } catch (e) {
       debugPrint('Error verificando antigüedad del caché: $e');
       return true;
+    }
+  }
+
+  /// Optimizar base de datos (ejecutar semanalmente)
+  /// 
+  /// VACUUM: Reconstruye la base de datos eliminando fragmentación
+  /// ANALYZE: Actualiza estadísticas para el optimizador de queries
+  Future<void> optimizeDatabase() async {
+    try {
+      PerformanceMonitor.start('Database Optimization');
+      final db = await _dataSource.database;
+
+      // VACUUM: Reconstruye BD, elimina fragmentación
+      await db.execute('VACUUM');
+
+      // ANALYZE: Actualiza estadísticas para query optimizer
+      await db.execute('ANALYZE');
+
+      PerformanceMonitor.stop('Database Optimization');
+      debugPrint('✅ Base de datos optimizada');
+    } catch (e) {
+      debugPrint('Error optimizando BD: $e');
+    }
+  }
+
+  /// Obtener timestamp de última optimización
+  Future<DateTime?> getLastOptimizationTime() async {
+    try {
+      final settings = await _dataSource.getSettings();
+      if (settings != null && settings['last_optimization'] != null) {
+        return DateTime.parse(settings['last_optimization'] as String);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error obteniendo timestamp de optimización: $e');
+      return null;
+    }
+  }
+
+  /// Actualizar timestamp de última optimización
+  Future<void> updateLastOptimizationTime() async {
+    try {
+      await _dataSource.updateSettings({
+        'last_optimization': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('Error actualizando timestamp de optimización: $e');
     }
   }
 
