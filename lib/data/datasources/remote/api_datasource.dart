@@ -18,14 +18,161 @@ class ApiDataSource {
   // URL base de la API gubernamental
   static const String _baseUrl =
       'https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/';
+  
+  // Endpoints por CCAA (Comunidades Autónomas) - MUCHO MÁS RÁPIDO
+  static const String _baseUrlCCAA =
+      'https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroCCAA/';
 
   // Cliente HTTP
   final http.Client _client;
 
   // Constructor con inyección de dependencias (permite testing)
   ApiDataSource({http.Client? client}) : _client = client ?? http.Client();
+  
+  /// Detectar código CCAA por coordenadas GPS (aproximado)
+  /// Retorna código de 2 dígitos o null si no se puede determinar
+  String? _detectCCAAByCoordinates(double lat, double lon) {
+    // Rangos aproximados de coordenadas por CCAA (España peninsular + islas)
+    // Formato: latMin, latMax, lonMin, lonMax, código
+    final ccaaRanges = [
+      // Madrid (centro)
+      [40.0, 41.2, -4.5, -3.0, '13'],
+      // Cataluña (noreste)
+      [40.5, 42.9, 0.1, 3.4, '09'],
+      // Andalucía (sur)
+      [36.0, 38.8, -7.5, -1.6, '01'],
+      // Comunidad Valenciana (este)
+      [37.8, 40.8, -1.5, 0.5, '10'],
+      // Galicia (noroeste)
+      [41.8, 43.8, -9.3, -6.7, '12'],
+      // Castilla y León (norte-centro)
+      [40.0, 43.2, -7.0, -1.5, '07'],
+      // País Vasco (norte)
+      [42.8, 43.5, -3.2, -1.7, '16'],
+      // Aragón (noreste-centro)
+      [39.8, 42.9, -2.2, 0.8, '02'],
+      // Castilla-La Mancha (centro-sur)
+      [38.0, 41.2, -5.3, -0.8, '08'],
+      // Murcia (sureste)
+      [37.4, 38.8, -2.4, -0.6, '14'],
+      // Asturias (norte)
+      [42.9, 43.7, -7.2, -4.5, '03'],
+      // Extremadura (oeste)
+      [37.9, 40.5, -7.6, -4.7, '11'],
+      // Islas Baleares
+      [38.6, 40.1, 1.2, 4.4, '04'],
+      // Canarias (Las Palmas)
+      [27.6, 29.5, -18.2, -13.4, '05'],
+      // Canarias (Tenerife)
+      [28.0, 28.6, -17.0, -16.1, '05'],
+      // Cantabria
+      [42.8, 43.5, -4.9, -3.1, '06'],
+      // La Rioja
+      [41.9, 42.7, -3.2, -1.7, '17'],
+      // Navarra
+      [41.9, 43.3, -2.5, -0.7, '15'],
+    ];
+    
+    // Buscar CCAA que contenga las coordenadas
+    for (var range in ccaaRanges) {
+      final latMin = range[0] as double;
+      final latMax = range[1] as double;
+      final lonMin = range[2] as double;
+      final lonMax = range[3] as double;
+      final code = range[4] as String;
+      
+      if (lat >= latMin && lat <= latMax && lon >= lonMin && lon <= lonMax) {
+        return code;
+      }
+    }
+    
+    return null; // No se pudo determinar
+  }
 
-  /// Obtener todas las estaciones de servicio desde la API
+  /// Obtener estaciones de una CCAA específica (RÁPIDO: ~800 estaciones)
+  Future<List<GasStationModel>> fetchStationsByCCAA(String ccaaCode) async {
+    try {
+      debugPrint('📍 Descargando gasolineras de CCAA: $ccaaCode');
+      
+      PerformanceMonitor.start('API Download CCAA');
+      final response = await _client.get(
+        Uri.parse('$_baseUrlCCAA$ccaaCode'),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Accept-Encoding': 'gzip',
+        },
+      ).timeout(
+        const Duration(seconds: 30), // Más rápido que descarga completa
+        onTimeout: () {
+          throw ApiException(
+            'Timeout: La petición tardó más de 30 segundos',
+            type: ApiErrorType.timeout,
+          );
+        },
+      );
+      PerformanceMonitor.stop('API Download CCAA');
+
+      if (response.statusCode == 200) {
+        PerformanceMonitor.start('JSON Parse CCAA');
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        PerformanceMonitor.stop('JSON Parse CCAA');
+
+        PerformanceMonitor.start('Background Parse CCAA');
+        final stations = await compute(_parseGasStationsInBackground, jsonData);
+        PerformanceMonitor.stop('Background Parse CCAA');
+
+        debugPrint('✅ ${stations.length} estaciones de CCAA $ccaaCode descargadas');
+        return stations;
+      } else {
+        throw ApiException(
+          'Error HTTP ${response.statusCode} al descargar CCAA',
+          type: ApiErrorType.httpError,
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Error descargando CCAA $ccaaCode: $e');
+      rethrow;
+    }
+  }
+  
+  /// Obtener estaciones cercanas a una ubicación (INTELIGENTE)
+  /// 1. Detecta CCAA del usuario
+  /// 2. Descarga solo esa CCAA (~800 estaciones)
+  /// 3. Fallback a descarga completa si falla
+  Future<List<GasStationModel>> fetchNearbyStations({
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      // Intentar detectar CCAA
+      final ccaaCode = _detectCCAAByCoordinates(latitude, longitude);
+      
+      if (ccaaCode != null) {
+        debugPrint('🎯 Ubicación detectada en CCAA: $ccaaCode');
+        debugPrint('⚡ Descarga optimizada: solo ~800 estaciones (vs 11,000)');
+        
+        try {
+          return await fetchStationsByCCAA(ccaaCode);
+        } catch (e) {
+          debugPrint('⚠️ Fallo descarga CCAA, intentando descarga completa...');
+          // Continuar con fallback
+        }
+      } else {
+        debugPrint('📍 No se pudo detectar CCAA, descargando todo');
+      }
+      
+      // Fallback: descarga completa
+      return await fetchAllStations();
+    } catch (e) {
+      debugPrint('❌ Error en fetchNearbyStations: $e');
+      rethrow;
+    }
+  }
+
+  /// Obtener todas las estaciones de servicio desde la API (LENTO: 11,000)
+  /// ⚠️ DEPRECADO: Usar fetchNearbyStations() para mejor rendimiento
   Future<List<GasStationModel>> fetchAllStations() async {
     try {
       // 1. Realizar petición GET con compresión gzip

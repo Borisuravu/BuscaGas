@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:buscagas/core/constants/app_constants.dart';
 import 'package:buscagas/domain/entities/app_settings.dart';
 import 'package:buscagas/presentation/screens/map_screen.dart';
@@ -7,6 +8,7 @@ import 'package:buscagas/services/database_service.dart';
 import 'package:buscagas/data/repositories/gas_station_repository_impl.dart';
 import 'package:buscagas/data/datasources/remote/api_datasource.dart';
 import 'package:buscagas/data/datasources/local/database_datasource.dart';
+import 'package:buscagas/data/models/gas_station_model.dart';
 import 'package:buscagas/main.dart' as main_app;
 
 /// Pantalla de inicio (Splash Screen)
@@ -113,8 +115,8 @@ class _SplashScreenState extends State<SplashScreen> {
       final isFirstRun = await _isFirstRun();
 
       if (isFirstRun) {
-        // Esperar un momento para que se vea el logo
-        await Future.delayed(const Duration(milliseconds: 800));
+        // Esperar un momento para que se vea el logo (reducido 800ms → 200ms)
+        await Future.delayed(const Duration(milliseconds: 200));
 
         // 2. Mostrar diálogo de tema (solo primera vez)
         if (mounted) {
@@ -143,9 +145,9 @@ class _SplashScreenState extends State<SplashScreen> {
       // 5. Verificar y cargar datos de gasolineras
       await _loadGasStationsData();
 
-      // 6. Navegar a MapScreen
+      // 6. Navegar a MapScreen (delay reducido 300ms → 100ms)
       _updateStatus('Completado', progress: 1.0);
-      await Future.delayed(const Duration(milliseconds: 300));
+      await Future.delayed(const Duration(milliseconds: 100));
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -193,12 +195,40 @@ class _SplashScreenState extends State<SplashScreen> {
       final cachedStations = await repository.getCachedStations();
 
       if (cachedStations.isEmpty) {
-        // No hay caché, descargar desde API
-        _updateStatus('Descargando gasolineras de España...', progress: 0.5);
-        debugPrint('📡 Descargando datos desde API gubernamental...');
+        // No hay caché, descargar desde API con ubicación GPS
+        _updateStatus('Obteniendo ubicación...', progress: 0.45);
+        debugPrint('📡 Primera ejecución: descarga inteligente por ubicación...');
 
         try {
-          final remoteStations = await repository.fetchRemoteStations();
+          // Obtener ubicación del usuario
+          Position? userPosition;
+          try {
+            userPosition = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.low, // Baja precisión = más rápido
+            ).timeout(const Duration(seconds: 10));
+            debugPrint('📍 Ubicación: ${userPosition.latitude}, ${userPosition.longitude}');
+          } catch (e) {
+            debugPrint('⚠️ No se pudo obtener ubicación GPS: $e');
+            // Continuar sin ubicación (descargará todo)
+          }
+          
+          _updateStatus(
+            userPosition != null 
+                ? 'Descargando gasolineras cercanas...'
+                : 'Descargando gasolineras de España...',
+            progress: 0.5,
+          );
+          
+          // Descargar usando ubicación si está disponible
+          List<GasStationModel> remoteStations;
+          if (userPosition != null) {
+            remoteStations = await apiDataSource.fetchNearbyStations(
+              latitude: userPosition.latitude,
+              longitude: userPosition.longitude,
+            );
+          } else {
+            remoteStations = await apiDataSource.fetchAllStations();
+          }
 
           _updateStatus(
             'Guardando ${remoteStations.length} gasolineras...',
@@ -207,7 +237,9 @@ class _SplashScreenState extends State<SplashScreen> {
           debugPrint(
               '💾 Guardando ${remoteStations.length} gasolineras en caché...');
 
-          await repository.updateCache(remoteStations);
+          // Convertir modelos a entidades antes de guardar
+          final entities = remoteStations.map((model) => model.toDomain()).toList();
+          await repository.updateCache(entities);
 
           _updateStatus(
             '✅ ${remoteStations.length} gasolineras listas',
@@ -235,14 +267,16 @@ class _SplashScreenState extends State<SplashScreen> {
           await Future.delayed(const Duration(seconds: 2));
         }
       } else {
-        // Hay caché disponible
+        // ✨ OPTIMIZACIÓN: Hay caché, navegar INMEDIATAMENTE sin esperar
         _updateStatus(
           '✅ ${cachedStations.length} gasolineras en caché',
           progress: 0.95,
         );
         debugPrint(
-            '✅ Usando caché local: ${cachedStations.length} gasolineras');
-        await Future.delayed(const Duration(milliseconds: 300));
+            '⚡ Caché disponible: ${cachedStations.length} gasolineras - navegando rápido');
+        
+        // Reducir delay de 300ms a 100ms cuando hay caché
+        await Future.delayed(const Duration(milliseconds: 100));
       }
     } catch (e) {
       debugPrint('❌ Error cargando datos: $e');

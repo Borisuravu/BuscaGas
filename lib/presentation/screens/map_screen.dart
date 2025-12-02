@@ -6,11 +6,20 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:buscagas/core/constants/app_constants.dart';
 import 'package:buscagas/domain/entities/fuel_type.dart';
 import 'package:buscagas/domain/entities/gas_station.dart';
+import 'package:buscagas/domain/entities/app_settings.dart';
 import 'package:buscagas/presentation/screens/settings_screen.dart';
 import 'package:buscagas/presentation/blocs/map/map_bloc.dart';
 import 'package:buscagas/presentation/blocs/map/map_event.dart';
 import 'package:buscagas/presentation/blocs/map/map_state.dart';
 import 'package:buscagas/presentation/widgets/station_info_card.dart';
+import 'package:buscagas/domain/usecases/get_nearby_stations.dart';
+import 'package:buscagas/domain/usecases/filter_by_fuel_type.dart';
+import 'package:buscagas/domain/usecases/calculate_distance.dart';
+import 'package:buscagas/data/repositories/gas_station_repository_impl.dart';
+import 'package:buscagas/data/datasources/remote/api_datasource.dart';
+import 'package:buscagas/data/datasources/local/database_datasource.dart';
+import 'package:buscagas/services/location_service.dart';
+import 'package:buscagas/services/data_sync_service.dart';
 
 /// Pantalla principal con mapa interactivo
 ///
@@ -34,12 +43,71 @@ class _MapScreenState extends State<MapScreen> {
   // Caché de iconos de marcadores
   final Map<double, BitmapDescriptor> _markerIcons = {};
   bool _iconsInitialized = false;
+  
+  // Lazy initialization - crear solo cuando sea necesario
+  MapBloc? _mapBloc;
+  DataSyncService? _dataSyncService;
 
   @override
   void initState() {
     super.initState();
     _initializeMarkerIcons();
-    _initializeMap();
+    _initializeAsync();
+  }
+  
+  /// Inicializar todo de forma ordenada
+  Future<void> _initializeAsync() async {
+    await _initializeDependencies();
+    await _initializeMap();
+  }
+  
+  /// Inicializar dependencias lazy (solo cuando se abre MapScreen)
+  Future<void> _initializeDependencies() async {
+    // Cargar settings
+    final settings = await AppSettings.load();
+    
+    // Crear data sources
+    final apiDataSource = ApiDataSource();
+    final databaseDataSource = DatabaseDataSource();
+    
+    // Crear repositorio
+    final repository = GasStationRepositoryImpl(
+      apiDataSource,
+      databaseDataSource,
+    );
+    
+    // Crear casos de uso
+    final getNearbyStations = GetNearbyStationsUseCase(repository);
+    final filterByFuelType = FilterByFuelTypeUseCase();
+    final calculateDistance = CalculateDistanceUseCase();
+    final locationService = LocationService();
+    
+    // Crear MapBloc
+    _mapBloc = MapBloc(
+      getNearbyStations: getNearbyStations,
+      filterByFuelType: filterByFuelType,
+      calculateDistance: calculateDistance,
+      settings: settings,
+      locationService: locationService,
+    );
+    
+    // Crear y configurar sincronización automática
+    _dataSyncService = DataSyncService(repository);
+    _dataSyncService?.onDataUpdated = () {
+      debugPrint('🔄 Datos sincronizados, refrescando mapa...');
+      _mapBloc?.add(const RefreshMapData());
+    };
+    _dataSyncService?.onSyncError = (error) {
+      debugPrint('⚠️ Error en sincronización: $error');
+    };
+    _dataSyncService?.startPeriodicSync();
+    
+    debugPrint('✅ Dependencias de MapScreen inicializadas');
+    
+    // Actualizar UI para mostrar el widget
+    if (mounted) {
+      setState(() {});
+    }
   }
   
   /// Inicializar iconos de marcadores (caché)
@@ -57,6 +125,8 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void dispose() {
     _mapController?.dispose();
+    _dataSyncService?.stopPeriodicSync();
+    _mapBloc?.close();
     super.dispose();
   }
 
@@ -112,8 +182,8 @@ class _MapScreenState extends State<MapScreen> {
       }
 
       // 3. Disparar evento BLoC para cargar datos
-      if (mounted) {
-        context.read<MapBloc>().add(LoadMapData(
+      if (mounted && _mapBloc != null) {
+        _mapBloc!.add(LoadMapData(
               latitude: position.latitude,
               longitude: position.longitude,
             ));
@@ -125,7 +195,7 @@ class _MapScreenState extends State<MapScreen> {
 
   /// Recentrar el mapa en la ubicación actual
   Future<void> _recenterMap() async {
-    context.read<MapBloc>().add(const RecenterMap());
+    _mapBloc?.add(const RecenterMap());
   }
 
   /// Manejar error de permisos con diálogo
@@ -206,7 +276,7 @@ class _MapScreenState extends State<MapScreen> {
   Widget _buildFuelButton(FuelType fuelType, String label, bool isSelected) {
     return ElevatedButton(
       onPressed: () {
-        context.read<MapBloc>().add(ChangeFuelType(fuelType: fuelType));
+        _mapBloc?.add(ChangeFuelType(fuelType: fuelType));
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: isSelected
@@ -303,17 +373,17 @@ class _MapScreenState extends State<MapScreen> {
 
   /// Callback cuando se toca un marcador
   void _onMarkerTapped(GasStation station) {
-    context.read<MapBloc>().add(SelectStation(station: station));
+    _mapBloc?.add(SelectStation(station: station));
   }
 
   /// Callback cuando se cierra la tarjeta
   void _onCloseCard() {
-    context.read<MapBloc>().add(const SelectStation(station: null));
+    _mapBloc?.add(const SelectStation(station: null));
   }
 
   /// Callback cuando se toca el mapa
   void _onMapTapped() {
-    final state = context.read<MapBloc>().state;
+    final state = _mapBloc?.state;
     if (state is MapLoaded && state.selectedStation != null) {
       _onCloseCard();
     }
@@ -426,10 +496,22 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(),
-      body: _buildBody(),
-      floatingActionButton: _buildRecenterButton(),
+    // Si el BLoC aún no está inicializado, mostrar cargando
+    if (_mapBloc == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    
+    return BlocProvider<MapBloc>.value(
+      value: _mapBloc!,
+      child: Scaffold(
+        appBar: _buildAppBar(),
+        body: _buildBody(),
+        floatingActionButton: _buildRecenterButton(),
+      ),
     );
   }
 }
