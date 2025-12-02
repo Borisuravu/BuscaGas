@@ -3,7 +3,7 @@ import 'package:buscagas/domain/entities/gas_station.dart';
 import 'package:buscagas/domain/entities/fuel_type.dart';
 
 /// Tarjeta flotante que muestra información de una gasolinera
-/// 
+///
 /// Muestra:
 /// - Nombre de la gasolinera
 /// - Dirección
@@ -13,20 +13,20 @@ class StationInfoCard extends StatelessWidget {
   final GasStation station;
   final FuelType selectedFuel;
   final VoidCallback? onClose;
-  
+
   const StationInfoCard({
     super.key,
     required this.station,
     required this.selectedFuel,
     this.onClose,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     final price = station.getPriceForFuel(selectedFuel);
-    final priceColor = station.priceRange?.color ?? 
-                       Theme.of(context).colorScheme.primary;
-    
+    final priceColor =
+        station.priceRange?.color ?? Theme.of(context).colorScheme.primary;
+
     return Card(
       elevation: 8,
       margin: const EdgeInsets.all(16),
@@ -44,8 +44,8 @@ class StationInfoCard extends StatelessWidget {
                   child: Text(
                     station.name,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ),
                 if (onClose != null)
@@ -59,16 +59,19 @@ class StationInfoCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            
+
             // Dirección
             Text(
               station.address,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.7),
+                  ),
             ),
             const SizedBox(height: 12),
-            
+
             // Precio del combustible
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -80,14 +83,14 @@ class StationInfoCard extends StatelessWidget {
                 Text(
                   price != null ? '${price.toStringAsFixed(3)} €/L' : 'N/A',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: priceColor,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: priceColor,
+                      ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            
+
             // Distancia
             if (station.distance != null)
               Row(
@@ -95,14 +98,20 @@ class StationInfoCard extends StatelessWidget {
                   Icon(
                     Icons.location_on,
                     size: 16,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.6),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '${station.distance!.toStringAsFixed(1)} km',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.6),
+                        ),
                   ),
                 ],
               ),

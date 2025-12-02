@@ -4,7 +4,7 @@ import '../../../domain/entities/fuel_type.dart';
 /// Clase base para estados de configuración
 abstract class SettingsState extends Equatable {
   const SettingsState();
-  
+
   @override
   List<Object?> get props => [];
 }
@@ -20,22 +20,22 @@ class SettingsLoaded extends SettingsState {
   final FuelType preferredFuel;
   final bool isDarkMode;
   final DateTime? lastSyncTimestamp;
-  
+
   const SettingsLoaded({
     required this.searchRadiusKm,
     required this.preferredFuel,
     required this.isDarkMode,
     this.lastSyncTimestamp,
   });
-  
+
   @override
   List<Object?> get props => [
-    searchRadiusKm,
-    preferredFuel,
-    isDarkMode,
-    lastSyncTimestamp,
-  ];
-  
+        searchRadiusKm,
+        preferredFuel,
+        isDarkMode,
+        lastSyncTimestamp,
+      ];
+
   /// Método helper para crear copia con cambios
   SettingsLoaded copyWith({
     int? searchRadiusKm,
@@ -55,10 +55,9 @@ class SettingsLoaded extends SettingsState {
 /// Estado: Error al cargar/guardar configuración
 class SettingsError extends SettingsState {
   final String message;
-  
+
   const SettingsError({required this.message});
-  
+
   @override
   List<Object?> get props => [message];
 }
-

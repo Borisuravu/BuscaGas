@@ -2,9 +2,9 @@
 class DistanceCalculator {
   // TODO: Implement - Implementar cálculo de distancia con Haversine
   // import 'dart:math'; cuando se implemente
-  
+
   static const double earthRadiusKm = 6371.0;
-  
+
   /// Calcula la distancia entre dos puntos geográficos en kilómetros
   static double calculateDistance(
     double lat1,
@@ -18,5 +18,3 @@ class DistanceCalculator {
     return 0.0;
   }
 }
-
-

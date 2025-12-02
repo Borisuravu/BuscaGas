@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'colors.dart';
 
 /// Configuración de temas de la aplicación BuscaGas
-/// 
+///
 /// Proporciona:
 /// - Tema claro (light theme)
 /// - Tema oscuro (dark theme)
@@ -12,17 +12,17 @@ import 'colors.dart';
 class AppTheme {
   // Prevenir instanciación
   AppTheme._();
-  
+
   // ============================================================
   // TEMA CLARO
   // ============================================================
-  
+
   static ThemeData get lightTheme {
     return ThemeData(
       // Configuración de brillo
       useMaterial3: true,
       brightness: Brightness.light,
-      
+
       // Paleta de colores
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryLight,
@@ -34,10 +34,10 @@ class AppTheme {
         onSurface: AppColors.textPrimaryLight,
         onError: Colors.white,
       ),
-      
+
       // Fondo de scaffold
       scaffoldBackgroundColor: AppColors.backgroundLight,
-      
+
       // AppBar
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surfaceElevatedLight,
@@ -55,7 +55,7 @@ class AppTheme {
           color: AppColors.textPrimaryLight,
         ),
       ),
-      
+
       // Cards
       cardTheme: CardThemeData(
         color: AppColors.surfaceLight,
@@ -66,7 +66,7 @@ class AppTheme {
         ),
         margin: const EdgeInsets.all(8),
       ),
-      
+
       // Botones elevados
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -84,7 +84,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Botones de texto
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
@@ -97,14 +97,14 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Botones flotantes
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.accentLight,
         foregroundColor: Colors.white,
         elevation: 6,
       ),
-      
+
       // Input decoration
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -125,25 +125,26 @@ class AppTheme {
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: AppColors.errorLight),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
-      
+
       // Divisores
       dividerTheme: const DividerThemeData(
         color: AppColors.dividerLight,
         thickness: 1,
         space: 1,
       ),
-      
+
       // Iconos
       iconTheme: const IconThemeData(
         color: AppColors.textPrimaryLight,
         size: 24,
       ),
-      
+
       // Tipografía
       textTheme: _buildTextTheme(AppColors.textPrimaryLight),
-      
+
       // Diálogos
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surfaceLight,
@@ -157,7 +158,7 @@ class AppTheme {
           fontWeight: FontWeight.w600,
         ),
       ),
-      
+
       // Bottom sheets
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.surfaceLight,
@@ -166,7 +167,7 @@ class AppTheme {
         ),
         elevation: 8,
       ),
-      
+
       // Chips
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceLight,
@@ -181,17 +182,17 @@ class AppTheme {
       ),
     );
   }
-  
+
   // ============================================================
   // TEMA OSCURO
   // ============================================================
-  
+
   static ThemeData get darkTheme {
     return ThemeData(
       // Configuración de brillo
       useMaterial3: true,
       brightness: Brightness.dark,
-      
+
       // Paleta de colores
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primaryDark,
@@ -203,10 +204,10 @@ class AppTheme {
         onSurface: AppColors.textPrimaryDark,
         onError: Colors.black,
       ),
-      
+
       // Fondo de scaffold
       scaffoldBackgroundColor: AppColors.backgroundDark,
-      
+
       // AppBar
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surfaceElevatedDark,
@@ -224,7 +225,7 @@ class AppTheme {
           color: AppColors.textPrimaryDark,
         ),
       ),
-      
+
       // Cards
       cardTheme: CardThemeData(
         color: AppColors.surfaceDark,
@@ -235,7 +236,7 @@ class AppTheme {
         ),
         margin: const EdgeInsets.all(8),
       ),
-      
+
       // Botones elevados
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -253,7 +254,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Botones de texto
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
@@ -266,14 +267,14 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Botones flotantes
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.accentDark,
         foregroundColor: Colors.black,
         elevation: 6,
       ),
-      
+
       // Input decoration
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -294,25 +295,26 @@ class AppTheme {
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: AppColors.errorDark),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
-      
+
       // Divisores
       dividerTheme: const DividerThemeData(
         color: AppColors.dividerDark,
         thickness: 1,
         space: 1,
       ),
-      
+
       // Iconos
       iconTheme: const IconThemeData(
         color: AppColors.textPrimaryDark,
         size: 24,
       ),
-      
+
       // Tipografía
       textTheme: _buildTextTheme(AppColors.textPrimaryDark),
-      
+
       // Diálogos
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surfaceDark,
@@ -326,7 +328,7 @@ class AppTheme {
           fontWeight: FontWeight.w600,
         ),
       ),
-      
+
       // Bottom sheets
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.surfaceDark,
@@ -335,7 +337,7 @@ class AppTheme {
         ),
         elevation: 8,
       ),
-      
+
       // Chips
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceDark,
@@ -350,11 +352,11 @@ class AppTheme {
       ),
     );
   }
-  
+
   // ============================================================
   // TIPOGRAFÍA
   // ============================================================
-  
+
   static TextTheme _buildTextTheme(Color textColor) {
     return TextTheme(
       // Títulos grandes
@@ -376,7 +378,7 @@ class AppTheme {
         color: textColor,
         letterSpacing: 0,
       ),
-      
+
       // Encabezados
       headlineLarge: TextStyle(
         fontSize: 22,
@@ -396,7 +398,7 @@ class AppTheme {
         color: textColor,
         letterSpacing: 0.15,
       ),
-      
+
       // Títulos
       titleLarge: TextStyle(
         fontSize: 20,
@@ -416,7 +418,7 @@ class AppTheme {
         color: textColor,
         letterSpacing: 0.1,
       ),
-      
+
       // Cuerpo de texto
       bodyLarge: TextStyle(
         fontSize: 16,
@@ -439,7 +441,7 @@ class AppTheme {
         letterSpacing: 0.4,
         height: 1.33,
       ),
-      
+
       // Etiquetas
       labelLarge: TextStyle(
         fontSize: 14,
@@ -461,11 +463,11 @@ class AppTheme {
       ),
     );
   }
-  
+
   // ============================================================
   // ESTILOS PERSONALIZADOS
   // ============================================================
-  
+
   /// Estilo para precios destacados
   static TextStyle priceTextStyle(BuildContext context, {bool isDark = false}) {
     return TextStyle(
@@ -475,19 +477,22 @@ class AppTheme {
       letterSpacing: 0.15,
     );
   }
-  
+
   /// Estilo para distancias
-  static TextStyle distanceTextStyle(BuildContext context, {bool isDark = false}) {
+  static TextStyle distanceTextStyle(BuildContext context,
+      {bool isDark = false}) {
     return TextStyle(
       fontSize: 14,
       fontWeight: FontWeight.normal,
-      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+      color:
+          isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
       letterSpacing: 0.25,
     );
   }
-  
+
   /// Estilo para nombres de gasolineras
-  static TextStyle stationNameTextStyle(BuildContext context, {bool isDark = false}) {
+  static TextStyle stationNameTextStyle(BuildContext context,
+      {bool isDark = false}) {
     return TextStyle(
       fontSize: 18,
       fontWeight: FontWeight.w600,
@@ -496,4 +501,3 @@ class AppTheme {
     );
   }
 }
-

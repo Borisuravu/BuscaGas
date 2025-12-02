@@ -14,7 +14,7 @@ class GasStationModel {
   final String longitud;
   final String? precioGasolina95;
   final String? precioDiesel;
-  
+
   GasStationModel({
     required this.ideess,
     required this.rotulo,
@@ -25,7 +25,7 @@ class GasStationModel {
     this.precioGasolina95,
     this.precioDiesel,
   });
-  
+
   factory GasStationModel.fromJson(Map<String, dynamic> json) {
     return GasStationModel(
       ideess: json['IDEESS']?.toString() ?? '',
@@ -38,7 +38,7 @@ class GasStationModel {
       precioDiesel: json['Precio Gasoleo A']?.toString(),
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'IDEESS': ideess,
@@ -51,11 +51,11 @@ class GasStationModel {
       'Precio Gasoleo A': precioDiesel,
     };
   }
-  
+
   // Mapper a entidad de dominio
   GasStation toDomain() {
     List<FuelPrice> prices = [];
-    
+
     if (precioGasolina95 != null) {
       double? price = _parsePrice(precioGasolina95!);
       if (price != null) {
@@ -66,7 +66,7 @@ class GasStationModel {
         ));
       }
     }
-    
+
     if (precioDiesel != null) {
       double? price = _parsePrice(precioDiesel!);
       if (price != null) {
@@ -77,7 +77,7 @@ class GasStationModel {
         ));
       }
     }
-    
+
     return GasStation(
       id: ideess,
       name: rotulo,
@@ -89,11 +89,11 @@ class GasStationModel {
       prices: prices,
     );
   }
-  
+
   factory GasStationModel.fromEntity(GasStation entity) {
     String? gasolina95;
     String? diesel;
-    
+
     for (var price in entity.prices) {
       if (price.fuelType == FuelType.gasolina95) {
         gasolina95 = price.value.toString().replaceAll('.', ',');
@@ -101,7 +101,7 @@ class GasStationModel {
         diesel = price.value.toString().replaceAll('.', ',');
       }
     }
-    
+
     return GasStationModel(
       ideess: entity.id,
       rotulo: entity.name,
@@ -113,7 +113,7 @@ class GasStationModel {
       precioDiesel: diesel,
     );
   }
-  
+
   double? _parsePrice(String priceStr) {
     try {
       // Reemplazar coma por punto y parsear

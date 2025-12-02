@@ -4,10 +4,10 @@ library;
 import 'package:flutter/material.dart';
 
 enum PriceRange {
-  low,    // verde
+  low, // verde
   medium, // amarillo/naranja
-  high;   // rojo
-  
+  high; // rojo
+
   Color get color {
     switch (this) {
       case PriceRange.low:

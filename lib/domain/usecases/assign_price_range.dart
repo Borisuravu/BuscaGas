@@ -6,20 +6,20 @@ import 'package:buscagas/domain/entities/gas_station.dart';
 import 'package:buscagas/domain/entities/fuel_type.dart';
 
 /// Clasificador de gasolineras por rangos de precio
-/// 
+///
 /// Utiliza percentiles para dividir las gasolineras en 3 grupos:
 /// - PriceRange.low: 33% más baratas (verde)
 /// - PriceRange.medium: 33% intermedias (amarillo/naranja)
 /// - PriceRange.high: 33% más caras (rojo)
 class AssignPriceRangeUseCase {
   /// Ejecutar caso de uso
-  /// 
+  ///
   /// Modifica IN-PLACE el campo priceRange de cada GasStation
   /// utilizando el algoritmo de percentiles del PriceRangeCalculator
-  /// 
+  ///
   /// [stations] Lista de gasolineras a clasificar (se modifica)
   /// [fuelType] Tipo de combustible para calcular rangos
-  /// 
+  ///
   /// Algoritmo:
   /// 1. Extraer todos los precios válidos del combustible especificado
   /// 2. Ordenar precios de menor a mayor

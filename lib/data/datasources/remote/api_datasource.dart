@@ -10,13 +10,13 @@ class ApiDataSource {
   // URL base de la API gubernamental
   static const String _baseUrl =
       'https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/';
-  
+
   // Cliente HTTP
   final http.Client _client;
-  
+
   // Constructor con inyección de dependencias (permite testing)
   ApiDataSource({http.Client? client}) : _client = client ?? http.Client();
-  
+
   /// Obtener todas las estaciones de servicio desde la API
   Future<List<GasStationModel>> fetchAllStations() async {
     try {
@@ -36,18 +36,17 @@ class ApiDataSource {
           );
         },
       );
-      
+
       // 2. Verificar código de estado HTTP
       if (response.statusCode == 200) {
         // 3. Parsear respuesta JSON
         final Map<String, dynamic> jsonData = json.decode(response.body);
-        
+
         // 4. Crear objeto de respuesta
         final apiResponse = ApiGasStationResponse.fromJson(jsonData);
-        
+
         // 5. Retornar lista de modelos
         return apiResponse.listaEESSPrecio;
-        
       } else if (response.statusCode == 404) {
         throw ApiException(
           'Endpoint no encontrado (404)',
@@ -65,13 +64,12 @@ class ApiDataSource {
           statusCode: response.statusCode,
         );
       }
-      
     } on ApiException {
       // Re-lanzar excepciones de API
       rethrow;
     } catch (e) {
       // Capturar otros errores (red, parseo, etc.)
-      if (e.toString().contains('SocketException') || 
+      if (e.toString().contains('SocketException') ||
           e.toString().contains('NetworkException')) {
         throw ApiException(
           'Sin conexión a internet',
@@ -90,19 +88,19 @@ class ApiDataSource {
       }
     }
   }
-  
+
   /// Verificar conectividad con la API
   Future<bool> checkConnection() async {
     try {
       final response = await _client.head(Uri.parse(_baseUrl)).timeout(
-        const Duration(seconds: 5),
-      );
+            const Duration(seconds: 5),
+          );
       return response.statusCode == 200;
     } catch (_) {
       return false;
     }
   }
-  
+
   /// Cerrar cliente HTTP (liberar recursos)
   void dispose() {
     _client.close();
@@ -113,13 +111,13 @@ class ApiDataSource {
 
 /// Tipos de errores de API
 enum ApiErrorType {
-  noConnection,     // Sin internet
-  timeout,          // Timeout de petición
-  serverError,      // Error 5xx
-  notFound,         // Error 404
-  httpError,        // Otros errores HTTP
-  parseError,       // Error al parsear JSON
-  unknown,          // Error desconocido
+  noConnection, // Sin internet
+  timeout, // Timeout de petición
+  serverError, // Error 5xx
+  notFound, // Error 404
+  httpError, // Otros errores HTTP
+  parseError, // Error al parsear JSON
+  unknown, // Error desconocido
 }
 
 /// Excepción personalizada para errores de API
@@ -127,18 +125,18 @@ class ApiException implements Exception {
   final String message;
   final ApiErrorType type;
   final int? statusCode;
-  
+
   ApiException(
     this.message, {
     required this.type,
     this.statusCode,
   });
-  
+
   @override
   String toString() {
     return 'ApiException [${type.name}]: $message';
   }
-  
+
   /// Obtener mensaje amigable para el usuario
   String get userFriendlyMessage {
     switch (type) {

@@ -18,7 +18,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final CalculateDistanceUseCase _calculateDistance;
   final AppSettings _settings;
   final LocationService _locationService;
-  
+
   MapBloc({
     required GetNearbyStationsUseCase getNearbyStations,
     required FilterByFuelTypeUseCase filterByFuelType,
@@ -39,14 +39,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<SelectStation>(_onSelectStation);
     on<ChangeSearchRadius>(_onChangeSearchRadius);
   }
-  
+
   /// Handler: Cargar datos del mapa
   Future<void> _onLoadMapData(
     LoadMapData event,
     Emitter<MapState> emit,
   ) async {
     emit(const MapLoading());
-    
+
     try {
       // 1. Obtener gasolineras cercanas
       List<GasStation> stations = await _getNearbyStations.call(
@@ -54,13 +54,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         longitude: event.longitude,
         radiusKm: _settings.searchRadius.toDouble(),
       );
-      
+
       // 2. Filtrar por combustible preferido
       stations = _filterByFuelType.call(
         stations: stations,
         fuelType: _settings.preferredFuel,
       );
-      
+
       // 3. Calcular distancias
       for (var station in stations) {
         station.distance = _calculateDistance.call(
@@ -70,14 +70,19 @@ class MapBloc extends Bloc<MapEvent, MapState> {
           lon2: station.longitude,
         );
       }
-      
+
       // 4. Ordenar por distancia
       stations.sort((a, b) => (a.distance ?? 0).compareTo(b.distance ?? 0));
-      
-      // 5. Clasificar por rangos de precio
+
+      // 5. Limitar a 50 marcadores más cercanos (optimización de rendimiento)
+      if (stations.length > 50) {
+        stations = stations.sublist(0, 50);
+      }
+
+      // 6. Clasificar por rangos de precio
       _assignPriceRanges(stations, _settings.preferredFuel);
-      
-      // 6. Emitir estado cargado
+
+      // 7. Emitir estado cargado
       emit(MapLoaded(
         stations: stations,
         currentFuelType: _settings.preferredFuel,
@@ -89,26 +94,26 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       emit(MapError(message: 'Error al cargar datos: ${e.toString()}'));
     }
   }
-  
+
   /// Handler: Cambiar tipo de combustible
   Future<void> _onChangeFuelType(
     ChangeFuelType event,
     Emitter<MapState> emit,
   ) async {
     if (state is! MapLoaded) return;
-    
+
     final currentState = state as MapLoaded;
-    
+
     try {
       // 1. Volver a filtrar con nuevo tipo de combustible
       List<GasStation> filteredStations = _filterByFuelType.call(
         stations: currentState.stations,
         fuelType: event.fuelType,
       );
-      
+
       // 2. Reclasificar por rangos de precio
       _assignPriceRanges(filteredStations, event.fuelType);
-      
+
       // 3. Emitir nuevo estado
       emit(currentState.copyWith(
         stations: filteredStations,
@@ -119,7 +124,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       emit(MapError(message: 'Error al cambiar combustible: ${e.toString()}'));
     }
   }
-  
+
   /// Handler: Recentrar mapa
   Future<void> _onRecenterMap(
     RecenterMap event,
@@ -128,71 +133,73 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     try {
       // Usar el servicio de ubicación
       Position position = await _locationService.getCurrentPosition();
-      
+
       // Recargar datos con nueva ubicación
       add(LoadMapData(
         latitude: position.latitude,
         longitude: position.longitude,
       ));
     } on LocationServiceDisabledException {
-      emit(const MapError(message: 'Servicio de ubicación deshabilitado. Por favor, activa el GPS.'));
+      emit(const MapError(
+          message:
+              'Servicio de ubicación deshabilitado. Por favor, activa el GPS.'));
     } on PermissionDeniedException {
       emit(const MapLocationPermissionDenied());
     } catch (e) {
       emit(MapError(message: 'Error al obtener ubicación: ${e.toString()}'));
     }
   }
-  
+
   /// Handler: Actualizar datos
   Future<void> _onRefreshMapData(
     RefreshMapData event,
     Emitter<MapState> emit,
   ) async {
     if (state is! MapLoaded) return;
-    
+
     final currentState = state as MapLoaded;
-    
+
     // Recargar con ubicación actual
     add(LoadMapData(
       latitude: currentState.currentLatitude,
       longitude: currentState.currentLongitude,
     ));
   }
-  
+
   /// Handler: Seleccionar gasolinera
   void _onSelectStation(
     SelectStation event,
     Emitter<MapState> emit,
   ) {
     if (state is! MapLoaded) return;
-    
+
     final currentState = state as MapLoaded;
-    
+
     emit(currentState.copyWith(
       selectedStation: event.station,
     ));
   }
-  
+
   /// Handler: Cambiar radio de búsqueda
   Future<void> _onChangeSearchRadius(
     ChangeSearchRadius event,
     Emitter<MapState> emit,
   ) async {
     if (state is! MapLoaded) return;
-    
+
     final currentState = state as MapLoaded;
-    
+
     // Actualizar configuración
     _settings.searchRadius = event.radiusKm;
     await _settings.save();
-    
+
     // Recargar datos con nuevo radio
     add(LoadMapData(
       latitude: currentState.currentLatitude,
       longitude: currentState.currentLongitude,
     ));
   }
-  
+
   /// Método auxiliar: Clasificar gasolineras por rango de precio
   void _assignPriceRanges(List<GasStation> stations, FuelType fuelType) {
     // 1. Extraer precios válidos
@@ -200,21 +207,21 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         .map((s) => s.getPriceForFuel(fuelType))
         .whereType<double>()
         .toList();
-    
+
     if (prices.isEmpty) return;
-    
+
     // 2. Calcular percentiles (33% y 66%)
     prices.sort();
     int count = prices.length;
-    
+
     double p33 = prices[(count * 0.33).floor()];
     double p66 = prices[(count * 0.66).floor()];
-    
+
     // 3. Asignar rangos
     for (var station in stations) {
       double? price = station.getPriceForFuel(fuelType);
       if (price == null) continue;
-      
+
       if (price <= p33) {
         station.priceRange = PriceRange.low;
       } else if (price <= p66) {
@@ -225,4 +232,3 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 }
-

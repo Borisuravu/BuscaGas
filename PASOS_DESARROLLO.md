@@ -50,10 +50,27 @@
 - Caso de uso: filtrar por tipo de combustible
 - Caso de uso: calcular distancias (Haversine)
 
-### Paso 8: Crear gestión de estado (BLoC)
+### Paso 8: Crear gestión de estado (BLoC) ✅ COMPLETADO
 - Implementar MapBloc para pantalla principal
 - Implementar SettingsBloc para configuración
 - Definir eventos y estados
+
+**Estado:** ✅ Completado el 2 de diciembre de 2025
+- Documentación: PLAN_ACCION_DETALLADO.md - FASE 1
+- Implementación: 
+  * lib/main.dart - BlocProvider configurado con todas las dependencias
+  * lib/presentation/screens/map_screen.dart - Refactorizado para consumir BLoC
+  * MapBloc integrado con eventos: LoadMapData, ChangeFuelType, RecenterMap, SelectStation
+  * BlocConsumer implementado con listener para errores y builder para estados
+- Funcionalidades:
+  * Estado centralizado en MapBloc
+  * Eliminado setState() de MapScreen
+  * Eventos disparados correctamente desde UI
+  * Marcadores y tarjeta listos para recibir datos
+  * Selector de combustible actualiza BLoC
+  * Botón recentrar GPS integrado
+- Validación: flutter analyze - 0 errores críticos
+- Preparado para: FASE 2 (carga de datos reales)
 
 ### Paso 9: Implementar servicios del sistema
 - Servicio de geolocalización (GPS)
@@ -87,11 +104,30 @@ No hay errores de compilación
 
 Solo advertencias menores de estilo (prefer_const_constructors, avoid_print)
 
-### Paso 12: Desarrollar pantalla principal con mapa ✅
+### Paso 12: Desarrollar pantalla principal con mapa ✅ COMPLETADO
 - Integrar Google Maps
 - Implementar marcadores personalizados con colores
 - Crear tarjeta flotante de información
 - Añadir selector de combustible
+
+**Estado:** ✅ Completado el 2 de diciembre de 2025 (FASES 1-4)
+- Documentación: PLAN_ACCION_DETALLADO.md - FASES 1-4
+- Resumen: PASO_12_COMPLETADO.md
+- Implementación:
+  * FASE 1: BLoC integrado (main.dart, map_screen.dart)
+  * FASE 2: Sincronización de datos (splash_screen.dart)
+  * FASE 3: Optimización de marcadores (map_bloc.dart)
+  * FASE 4: Tarjeta de información (ya integrada en FASE 1)
+- Funcionalidades:
+  * Descarga inicial de ~11,000 gasolineras desde API
+  * Caché persistente en SQLite
+  * Marcadores con colores según rango de precio (verde/naranja/rojo)
+  * Límite de 50 marcadores más cercanos (rendimiento)
+  * Tarjeta flotante con información completa
+  * Selector de combustible actualiza marcadores
+  * Botón recentrar GPS funcional
+- Validación: flutter analyze - 0 errores
+- **App 100% funcional** - Muestra gasolineras reales
 
 ### Paso 13: Crear pantalla de configuración ✅ COMPLETADO
 - Diseñar formulario de preferencias

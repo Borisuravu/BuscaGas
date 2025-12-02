@@ -1,7 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 
 /// Servicio para gestionar la geolocalización del usuario
-/// 
+///
 /// Responsabilidades:
 /// - Verificar y solicitar permisos de ubicación
 /// - Obtener coordenadas GPS actuales
@@ -13,9 +13,9 @@ class LocationService {
     accuracy: LocationAccuracy.high,
     distanceFilter: 100, // Actualizar cada 100 metros
   );
-  
+
   /// Obtener la posición actual del usuario
-  /// 
+  ///
   /// Lanza [LocationServiceDisabledException] si GPS está deshabilitado
   /// Lanza [PermissionDeniedException] si no hay permisos
   /// Lanza [TimeoutException] si tarda más de 10 segundos
@@ -25,24 +25,25 @@ class LocationService {
     if (!serviceEnabled) {
       throw const LocationServiceDisabledException();
     }
-    
+
     // 2. Verificar permisos
     bool hasPermission = await checkLocationPermission();
     if (!hasPermission) {
       // Intentar solicitar permisos
       bool granted = await requestLocationPermission();
       if (!granted) {
-        throw const PermissionDeniedException('Permisos de ubicación denegados');
+        throw const PermissionDeniedException(
+            'Permisos de ubicación denegados');
       }
     }
-    
+
     // 3. Obtener posición actual
     try {
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 10),
       );
-      
+
       return position;
     } catch (e) {
       // Si falla, intentar obtener última ubicación conocida
@@ -50,72 +51,72 @@ class LocationService {
       if (lastKnown != null) {
         return lastKnown;
       }
-      
+
       // Si no hay última ubicación, lanzar excepción
       rethrow;
     }
   }
-  
+
   /// Verificar si los servicios de ubicación están habilitados
   Future<bool> isLocationServiceEnabled() async {
     return await Geolocator.isLocationServiceEnabled();
   }
-  
+
   /// Verificar si la aplicación tiene permisos de ubicación
   Future<bool> checkLocationPermission() async {
     LocationPermission permission = await Geolocator.checkPermission();
-    
+
     return permission == LocationPermission.whileInUse ||
-           permission == LocationPermission.always;
+        permission == LocationPermission.always;
   }
-  
+
   /// Solicitar permisos de ubicación al usuario
-  /// 
+  ///
   /// Retorna true si se concedieron los permisos
   /// Retorna false si se denegaron
   Future<bool> requestLocationPermission() async {
     LocationPermission permission = await Geolocator.checkPermission();
-    
+
     // Si ya están concedidos, retornar true
     if (permission == LocationPermission.whileInUse ||
         permission == LocationPermission.always) {
       return true;
     }
-    
+
     // Si están denegados permanentemente, no se puede solicitar
     if (permission == LocationPermission.deniedForever) {
       return false;
     }
-    
+
     // Solicitar permisos
     permission = await Geolocator.requestPermission();
-    
+
     return permission == LocationPermission.whileInUse ||
-           permission == LocationPermission.always;
+        permission == LocationPermission.always;
   }
-  
+
   /// Abrir la configuración de la aplicación para que el usuario
   /// pueda habilitar los permisos manualmente
   Future<bool> openLocationSettings() async {
     return await Geolocator.openLocationSettings();
   }
-  
+
   /// Abrir la configuración de la aplicación
   Future<bool> openAppSettings() async {
     return await Geolocator.openAppSettings();
   }
-  
+
   /// Obtener un stream de actualizaciones de posición
-  /// 
+  ///
   /// Útil para seguimiento en tiempo real (opcional para MVP)
   Stream<Position> getPositionStream() {
     return Geolocator.getPositionStream(
       locationSettings: _locationSettings,
     );
   }
-  
+
   /// Calcular la distancia entre dos puntos en metros
-  /// 
+  ///
   /// Útil para verificar si el usuario se ha movido significativamente
   double calculateDistance(
     double startLatitude,
@@ -130,9 +131,9 @@ class LocationService {
       endLongitude,
     );
   }
-  
+
   /// Obtener una posición predeterminada (Madrid centro)
-  /// 
+  ///
   /// Usar solo como fallback cuando no se puede obtener ubicación real
   Position getDefaultPosition() {
     return Position(

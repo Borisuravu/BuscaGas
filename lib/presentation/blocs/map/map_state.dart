@@ -5,7 +5,7 @@ import '../../../domain/entities/fuel_type.dart';
 /// Clase base para todos los estados del mapa
 abstract class MapState extends Equatable {
   const MapState();
-  
+
   @override
   List<Object?> get props => [];
 }
@@ -28,7 +28,7 @@ class MapLoaded extends MapState {
   final double currentLongitude;
   final int searchRadiusKm;
   final GasStation? selectedStation;
-  
+
   const MapLoaded({
     required this.stations,
     required this.currentFuelType,
@@ -37,17 +37,17 @@ class MapLoaded extends MapState {
     required this.searchRadiusKm,
     this.selectedStation,
   });
-  
+
   @override
   List<Object?> get props => [
-    stations,
-    currentFuelType,
-    currentLatitude,
-    currentLongitude,
-    searchRadiusKm,
-    selectedStation,
-  ];
-  
+        stations,
+        currentFuelType,
+        currentLatitude,
+        currentLongitude,
+        searchRadiusKm,
+        selectedStation,
+      ];
+
   /// Método helper para crear una copia con cambios
   MapLoaded copyWith({
     List<GasStation>? stations,
@@ -64,7 +64,8 @@ class MapLoaded extends MapState {
       currentLatitude: currentLatitude ?? this.currentLatitude,
       currentLongitude: currentLongitude ?? this.currentLongitude,
       searchRadiusKm: searchRadiusKm ?? this.searchRadiusKm,
-      selectedStation: clearSelection ? null : (selectedStation ?? this.selectedStation),
+      selectedStation:
+          clearSelection ? null : (selectedStation ?? this.selectedStation),
     );
   }
 }
@@ -72,9 +73,9 @@ class MapLoaded extends MapState {
 /// Estado: Error al cargar datos
 class MapError extends MapState {
   final String message;
-  
+
   const MapError({required this.message});
-  
+
   @override
   List<Object?> get props => [message];
 }
@@ -83,4 +84,3 @@ class MapError extends MapState {
 class MapLocationPermissionDenied extends MapState {
   const MapLocationPermissionDenied();
 }
-

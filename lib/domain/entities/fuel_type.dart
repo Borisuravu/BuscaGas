@@ -4,7 +4,7 @@ library;
 enum FuelType {
   gasolina95,
   dieselGasoleoA;
-  
+
   String get displayName {
     switch (this) {
       case FuelType.gasolina95:

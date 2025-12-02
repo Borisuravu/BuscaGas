@@ -10,34 +10,34 @@ class AppSettings {
   FuelType preferredFuel;
   bool darkMode;
   DateTime? lastUpdateTimestamp;
-  
+
   AppSettings({
     this.searchRadius = 10,
     this.preferredFuel = FuelType.gasolina95,
     this.darkMode = false,
     this.lastUpdateTimestamp,
   });
-  
+
   Future<void> save() async {
     try {
       final dbService = DatabaseService();
-      
+
       // Guardar en base de datos
       await dbService.updateSearchRadius(searchRadius);
       await dbService.updatePreferredFuel(preferredFuel);
       await dbService.updateDarkMode(darkMode);
-      
+
       debugPrint('✅ Configuración guardada en BD');
     } catch (e) {
       debugPrint('❌ Error guardando configuración en BD: $e');
     }
   }
-  
+
   static Future<AppSettings> load() async {
     try {
       final dbService = DatabaseService();
       final settings = await dbService.getAppSettings();
-      
+
       if (settings != null) {
         // Cargar desde base de datos
         FuelType fuelType = FuelType.gasolina95;
@@ -48,7 +48,7 @@ class AppSettings {
         } catch (_) {
           fuelType = FuelType.gasolina95;
         }
-        
+
         DateTime? timestamp;
         if (settings['last_api_sync'] != null) {
           try {
@@ -57,7 +57,7 @@ class AppSettings {
             timestamp = null;
           }
         }
-        
+
         return AppSettings(
           searchRadius: settings['search_radius'] as int? ?? 10,
           preferredFuel: fuelType,

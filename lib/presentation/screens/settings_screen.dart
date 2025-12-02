@@ -4,7 +4,7 @@ import 'package:buscagas/domain/entities/fuel_type.dart';
 import 'package:buscagas/main.dart' as main_app;
 
 /// Pantalla de configuración de preferencias
-/// 
+///
 /// Responsabilidades:
 /// - Mostrar y editar radio de búsqueda
 /// - Mostrar y editar combustible preferido
@@ -13,7 +13,7 @@ import 'package:buscagas/main.dart' as main_app;
 /// - Aplicar cambios inmediatamente
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
-  
+
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
@@ -22,27 +22,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Estado local
   AppSettings? _settings;
   bool _isLoading = true;
-  
+
   // Valores seleccionados
   int _selectedRadius = 10;
   FuelType _selectedFuel = FuelType.gasolina95;
   bool _isDarkMode = false;
-  
+
   @override
   void initState() {
     super.initState();
     _loadSettings();
   }
-  
+
   /// Cargar configuración inicial desde base de datos
   Future<void> _loadSettings() async {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       final settings = await AppSettings.load();
-      
+
       setState(() {
         _settings = settings;
         _selectedRadius = settings.searchRadius;
@@ -52,7 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
     } catch (e) {
       debugPrint('Error cargando configuración: $e');
-      
+
       // Valores por defecto en caso de error
       setState(() {
         _selectedRadius = 10;
@@ -60,7 +60,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _isDarkMode = false;
         _isLoading = false;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error cargando configuración: $e')),
@@ -68,7 +68,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
   }
-  
+
   /// Actualizar radio de búsqueda
   Future<void> _updateSearchRadius(int radius) async {
     try {
@@ -76,7 +76,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _settings!.searchRadius = radius;
         await _settings!.save();
         debugPrint('✅ Radio de búsqueda actualizado: $radius km');
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -95,7 +95,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
   }
-  
+
   /// Actualizar combustible preferido
   Future<void> _updatePreferredFuel(FuelType fuel) async {
     try {
@@ -103,7 +103,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _settings!.preferredFuel = fuel;
         await _settings!.save();
         debugPrint('✅ Combustible preferido actualizado: ${fuel.displayName}');
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -122,7 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
   }
-  
+
   /// Actualizar tema (claro/oscuro)
   Future<void> _updateTheme(bool isDark) async {
     try {
@@ -130,10 +130,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _settings!.darkMode = isDark;
         await _settings!.save();
         debugPrint('✅ Tema actualizado: ${isDark ? "Oscuro" : "Claro"}');
-        
+
         // Notificar a la app principal para recargar el tema
         main_app.appKey.currentState?.reloadSettings();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -152,7 +152,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -163,14 +163,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: _isLoading ? _buildLoading() : _buildBody(),
     );
   }
-  
+
   /// Construir indicador de carga
   Widget _buildLoading() {
     return const Center(
       child: CircularProgressIndicator(),
     );
   }
-  
+
   /// Construir cuerpo principal
   Widget _buildBody() {
     return SingleChildScrollView(
@@ -181,15 +181,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Sección: Radio de búsqueda
           _buildRadiusSection(),
           const SizedBox(height: 32),
-          
+
           // Sección: Combustible preferido
           _buildFuelSection(),
           const SizedBox(height: 32),
-          
+
           // Sección: Tema
           _buildThemeSection(),
           const SizedBox(height: 48),
-          
+
           // Botón: Volver al mapa
           _buildBackButton(),
           const SizedBox(height: 24),
@@ -197,7 +197,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-  
+
   /// Construir sección de radio de búsqueda
   Widget _buildRadiusSection() {
     return Column(
@@ -215,7 +215,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ],
     );
   }
-  
+
   /// Construir opción de radio
   Widget _buildRadioOption(int radiusKm) {
     return RadioListTile<int>(
@@ -230,12 +230,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _updateSearchRadius(value);
         }
       },
-      subtitle: radiusKm == 10 
+      subtitle: radiusKm == 10
           ? const Text('Recomendado', style: TextStyle(fontSize: 12))
           : null,
     );
   }
-  
+
   /// Construir sección de combustible preferido
   Widget _buildFuelSection() {
     return Column(
@@ -277,7 +277,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ],
     );
   }
-  
+
   /// Construir sección de tema
   Widget _buildThemeSection() {
     return Column(
@@ -327,7 +327,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ],
     );
   }
-  
+
   /// Construir botón de volver al mapa
   Widget _buildBackButton() {
     return ElevatedButton(

@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:buscagas/core/constants/app_constants.dart';
 import 'package:buscagas/domain/entities/fuel_type.dart';
-import 'package:buscagas/domain/entities/app_settings.dart';
+import 'package:buscagas/domain/entities/gas_station.dart';
 import 'package:buscagas/presentation/screens/settings_screen.dart';
-import 'package:buscagas/services/data_sync_service.dart';
-import 'package:buscagas/data/repositories/gas_station_repository_impl.dart';
-import 'package:buscagas/data/datasources/remote/api_datasource.dart';
-import 'package:buscagas/data/datasources/local/database_datasource.dart';
+import 'package:buscagas/presentation/blocs/map/map_bloc.dart';
+import 'package:buscagas/presentation/blocs/map/map_event.dart';
+import 'package:buscagas/presentation/blocs/map/map_state.dart';
+import 'package:buscagas/presentation/widgets/station_info_card.dart';
 
 /// Pantalla principal con mapa interactivo
-/// 
+///
 /// Responsabilidades:
 /// - Mostrar Google Maps centrado en ubicación del usuario
 /// - Renderizar marcadores de gasolineras con colores
@@ -29,63 +30,42 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   GoogleMapController? _mapController;
-  Position? _currentPosition;
-  FuelType _selectedFuel = FuelType.gasolina95;
-  bool _isLoading = true;
-  String? _errorMessage;
-  DataSyncService? _dataSyncService;
-  
-  // TODO: Añadir lista de gasolineras desde repositorio en pasos futuros
-  // TODO: Añadir markers set en pasos futuros
-  // TODO: Añadir selected station para tarjeta en pasos futuros
-  
+
   @override
   void initState() {
     super.initState();
     _initializeMap();
-    _initializeDataSync();
   }
-  
+
   @override
   void dispose() {
     _mapController?.dispose();
-    _dataSyncService?.dispose();
     super.dispose();
   }
-  
+
   /// Verificar si los permisos de ubicación están concedidos
   Future<bool> _checkLocationPermission() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      setState(() {
-        _errorMessage = 'Los servicios de ubicación están desactivados';
-      });
       return false;
     }
-    
+
     LocationPermission permission = await Geolocator.checkPermission();
-    
+
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        setState(() {
-          _errorMessage = 'Permisos de ubicación denegados';
-        });
         return false;
       }
     }
-    
+
     if (permission == LocationPermission.deniedForever) {
-      setState(() {
-        _errorMessage = 'Permisos de ubicación denegados permanentemente.\n'
-            'Por favor, actívalos en la configuración de la aplicación.';
-      });
       return false;
     }
-    
+
     return true;
   }
-  
+
   /// Obtener la ubicación actual del usuario
   Future<Position?> _getCurrentLocation() async {
     try {
@@ -98,88 +78,39 @@ class _MapScreenState extends State<MapScreen> {
       return null;
     }
   }
-  
+
   /// Inicializar el mapa y cargar datos
   Future<void> _initializeMap() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    
     try {
       // 1. Verificar permisos
       final hasPermission = await _checkLocationPermission();
       if (!hasPermission) {
-        setState(() {
-          _isLoading = false;
-        });
         return;
       }
-      
+
       // 2. Obtener ubicación
       final position = await _getCurrentLocation();
       if (position == null) {
-        setState(() {
-          _errorMessage = 'No se pudo obtener la ubicación';
-          _isLoading = false;
-        });
         return;
       }
-      
-      // 3. Cargar configuración de usuario
-      final settings = await AppSettings.load();
-      
-      setState(() {
-        _currentPosition = position;
-        _selectedFuel = settings.preferredFuel;
-        _isLoading = false;
-      });
-      
-      // 4. TODO: Cargar gasolineras del repositorio en pasos futuros
-      // await _loadGasStations();
-      
+
+      // 3. Disparar evento BLoC para cargar datos
+      if (mounted) {
+        context.read<MapBloc>().add(LoadMapData(
+              latitude: position.latitude,
+              longitude: position.longitude,
+            ));
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Error al inicializar mapa: $e';
-        _isLoading = false;
-      });
+      debugPrint('Error al inicializar mapa: $e');
     }
   }
-  
+
   /// Recentrar el mapa en la ubicación actual
   Future<void> _recenterMap() async {
-    if (_mapController == null) return;
-    
-    try {
-      // Obtener ubicación actual
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      
-      // Animar cámara a nueva posición
-      _mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: LatLng(position.latitude, position.longitude),
-            zoom: 13.0,
-          ),
-        ),
-      );
-      
-      setState(() {
-        _currentPosition = position;
-      });
-      
-      // TODO: Recargar gasolineras cercanas en pasos futuros
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al obtener ubicación: $e')),
-        );
-      }
-    }
+    context.read<MapBloc>().add(const RecenterMap());
   }
-  
+
   /// Manejar error de permisos con diálogo
   Future<void> _handleLocationError() async {
     showDialog(
@@ -206,64 +137,7 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
   }
-  
-  /// Inicializar servicio de sincronización automática
-  void _initializeDataSync() {
-    try {
-      // Crear instancias de data sources y repositorio
-      final apiDataSource = ApiDataSource();
-      final databaseDataSource = DatabaseDataSource();
-      final repository = GasStationRepositoryImpl(
-        apiDataSource,
-        databaseDataSource,
-      );
-      
-      // Inicializar servicio de sincronización
-      _dataSyncService = DataSyncService(repository);
-      
-      // Configurar callbacks
-      _dataSyncService!.onDataUpdated = _onDataSyncCompleted;
-      _dataSyncService!.onSyncError = _onDataSyncError;
-      
-      // Iniciar sincronización periódica
-      _dataSyncService!.startPeriodicSync();
-      
-      print('🔄 Servicio de sincronización iniciado correctamente');
-    } catch (e) {
-      print('❌ Error al inicializar servicio de sincronización: $e');
-    }
-  }
-  
-  /// Callback cuando se completa la sincronización de datos
-  void _onDataSyncCompleted() {
-    if (!mounted) return;
-    
-    print('✅ Datos sincronizados, recargando marcadores...');
-    
-    // TODO: Recargar gasolineras desde caché actualizada
-    // Esto se implementará en Paso 8 (BLoC)
-    // context.read<MapBloc>().add(ReloadStations());
-    
-    // Mostrar notificación sutil (opcional)
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Datos actualizados'),
-        duration: Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-  
-  /// Callback cuando hay error en sincronización
-  void _onDataSyncError(String error) {
-    if (!mounted) return;
-    
-    print('⚠️  Error de sincronización: $error');
-    
-    // No mostrar error al usuario si es solo falta de conexión
-    // La app funciona con caché
-  }
-  
+
   /// Construir AppBar
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
@@ -283,9 +157,9 @@ class _MapScreenState extends State<MapScreen> {
       ],
     );
   }
-  
+
   /// Construir selector de combustible
-  Widget _buildFuelSelector() {
+  Widget _buildFuelSelector(FuelType currentFuel) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: Theme.of(context).colorScheme.surface,
@@ -295,7 +169,7 @@ class _MapScreenState extends State<MapScreen> {
             child: _buildFuelButton(
               FuelType.gasolina95,
               'Gasolina 95',
-              _selectedFuel == FuelType.gasolina95,
+              currentFuel == FuelType.gasolina95,
             ),
           ),
           const SizedBox(width: 12),
@@ -303,22 +177,19 @@ class _MapScreenState extends State<MapScreen> {
             child: _buildFuelButton(
               FuelType.dieselGasoleoA,
               'Diésel Gasóleo A',
-              _selectedFuel == FuelType.dieselGasoleoA,
+              currentFuel == FuelType.dieselGasoleoA,
             ),
           ),
         ],
       ),
     );
   }
-  
+
   /// Construir botón individual de combustible
   Widget _buildFuelButton(FuelType fuelType, String label, bool isSelected) {
     return ElevatedButton(
       onPressed: () {
-        setState(() {
-          _selectedFuel = fuelType;
-          // TODO: Actualizar marcadores según nuevo combustible en pasos futuros
-        });
+        context.read<MapBloc>().add(ChangeFuelType(fuelType: fuelType));
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: isSelected
@@ -337,39 +208,101 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
   }
-  
-  /// Construir el mapa de Google Maps
-  Widget _buildMap() {
-    if (_currentPosition == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-    
-    return GoogleMap(
-      initialCameraPosition: CameraPosition(
-        target: LatLng(
-          _currentPosition!.latitude,
-          _currentPosition!.longitude,
+
+  /// Construir el mapa de Google Maps con marcadores
+  Widget _buildMap(MapLoaded state) {
+    return Stack(
+      children: [
+        GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: LatLng(
+              state.currentLatitude,
+              state.currentLongitude,
+            ),
+            zoom: 13.0,
+          ),
+          onMapCreated: (GoogleMapController controller) {
+            _mapController = controller;
+          },
+          myLocationEnabled: true,
+          myLocationButtonEnabled: false,
+          mapType: MapType.normal,
+          zoomControlsEnabled: false,
+          markers: _buildMarkers(state.stations, state.currentFuelType),
+          onTap: (_) => _onMapTapped(),
         ),
-        zoom: 13.0,
-      ),
-      onMapCreated: (GoogleMapController controller) {
-        _mapController = controller;
-      },
-      myLocationEnabled: true,
-      myLocationButtonEnabled: false, // Usamos nuestro botón personalizado
-      mapType: MapType.normal,
-      zoomControlsEnabled: false, // Ocultamos controles por defecto
-      // TODO: Añadir markers en pasos futuros
-      // markers: _markers,
-      // TODO: Añadir onTap para ocultar tarjeta en pasos futuros
-      onTap: (_) {
-        // Ocultar tarjeta flotante si está visible
-      },
+
+        // Tarjeta flotante si hay estación seleccionada
+        if (state.selectedStation != null)
+          Positioned(
+            bottom: 16,
+            left: 16,
+            right: 16,
+            child: StationInfoCard(
+              station: state.selectedStation!,
+              selectedFuel: state.currentFuelType,
+              onClose: () => _onCloseCard(),
+            ),
+          ),
+      ],
     );
   }
-  
+
+  /// Construir marcadores dinámicamente
+  Set<Marker> _buildMarkers(List<GasStation> stations, FuelType fuelType) {
+    return stations.map((station) {
+      final price = station.getPriceForFuel(fuelType);
+      final color = station.priceRange?.color ?? Colors.grey;
+
+      return Marker(
+        markerId: MarkerId(station.id),
+        position: LatLng(station.latitude, station.longitude),
+        icon: BitmapDescriptor.defaultMarkerWithHue(
+          _getMarkerHue(color),
+        ),
+        infoWindow: InfoWindow(
+          title: station.name,
+          snippet: price != null
+              ? '${price.toStringAsFixed(3)} €/L - ${station.distance?.toStringAsFixed(1)} km'
+              : 'Precio no disponible',
+        ),
+        onTap: () => _onMarkerTapped(station),
+      );
+    }).toSet();
+  }
+
+  /// Obtener color de marcador según precio
+  double _getMarkerHue(Color color) {
+    if (color == Colors.green || color.value == 0xFF4CAF50) {
+      return BitmapDescriptor.hueGreen;
+    }
+    if (color == Colors.orange || color.value == 0xFFFF9800) {
+      return BitmapDescriptor.hueOrange;
+    }
+    if (color == Colors.red || color.value == 0xFFF44336) {
+      return BitmapDescriptor.hueRed;
+    }
+    return BitmapDescriptor.hueAzure;
+  }
+
+  /// Callback cuando se toca un marcador
+  void _onMarkerTapped(GasStation station) {
+    context.read<MapBloc>().add(SelectStation(station: station));
+  }
+
+  /// Callback cuando se cierra la tarjeta
+  void _onCloseCard() {
+    context.read<MapBloc>().add(const SelectStation(station: null));
+  }
+
+  /// Callback cuando se toca el mapa
+  void _onMapTapped() {
+    final state = context.read<MapBloc>().state;
+    if (state is MapLoaded && state.selectedStation != null) {
+      _onCloseCard();
+    }
+  }
+
   /// Construir botón de recentrado
   Widget _buildRecenterButton() {
     return FloatingActionButton(
@@ -378,76 +311,109 @@ class _MapScreenState extends State<MapScreen> {
       child: const Icon(Icons.my_location),
     );
   }
-  
-  /// Construir cuerpo principal con estados
+
+  /// Construir cuerpo principal con BLoC
   Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Cargando mapa...'),
-          ],
-        ),
-      );
-    }
-    
-    if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _initializeMap,
-                child: const Text('Reintentar'),
-              ),
-              if (_errorMessage!.contains('permanentemente'))
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: TextButton(
-                    onPressed: _handleLocationError,
-                    child: const Text('Abrir Configuración'),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      );
-    }
-    
+    return BlocConsumer<MapBloc, MapState>(
+      listener: (context, state) {
+        // Manejar errores
+        if (state is MapError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        } else if (state is MapLocationPermissionDenied) {
+          _handleLocationError();
+        }
+      },
+      builder: (context, state) {
+        if (state is MapLoading || state is MapInitial) {
+          return _buildLoadingView();
+        } else if (state is MapLoaded) {
+          return _buildMapView(state);
+        } else if (state is MapError) {
+          return _buildErrorView(state.message);
+        } else if (state is MapLocationPermissionDenied) {
+          return _buildErrorView(
+            'Permisos de ubicación denegados.\nPor favor, actívalos en la configuración.',
+          );
+        }
+        return _buildLoadingView();
+      },
+    );
+  }
+
+  /// Vista de carga
+  Widget _buildLoadingView() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text('Cargando mapa...'),
+        ],
+      ),
+    );
+  }
+
+  /// Vista del mapa con datos
+  Widget _buildMapView(MapLoaded state) {
     return Column(
       children: [
-        _buildFuelSelector(),
-        Expanded(child: _buildMap()),
-        // TODO: Añadir tarjeta flotante si hay estación seleccionada en pasos futuros
+        _buildFuelSelector(state.currentFuelType),
+        Expanded(child: _buildMap(state)),
       ],
     );
   }
-  
+
+  /// Vista de error
+  Widget _buildErrorView(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _initializeMap,
+              child: const Text('Reintentar'),
+            ),
+            if (message.contains('permanentemente') ||
+                message.contains('denegados'))
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: TextButton(
+                  onPressed: _handleLocationError,
+                  child: const Text('Abrir Configuración'),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
       body: _buildBody(),
-      floatingActionButton: _isLoading || _errorMessage != null 
-          ? null 
-          : _buildRecenterButton(),
+      floatingActionButton: _buildRecenterButton(),
     );
   }
 }

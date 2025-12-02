@@ -5,7 +5,7 @@ import '../../../domain/entities/fuel_type.dart';
 /// Clase base para todos los eventos del mapa
 abstract class MapEvent extends Equatable {
   const MapEvent();
-  
+
   @override
   List<Object?> get props => [];
 }
@@ -14,12 +14,12 @@ abstract class MapEvent extends Equatable {
 class LoadMapData extends MapEvent {
   final double latitude;
   final double longitude;
-  
+
   const LoadMapData({
     required this.latitude,
     required this.longitude,
   });
-  
+
   @override
   List<Object?> get props => [latitude, longitude];
 }
@@ -27,9 +27,9 @@ class LoadMapData extends MapEvent {
 /// Evento: Cambiar tipo de combustible seleccionado
 class ChangeFuelType extends MapEvent {
   final FuelType fuelType;
-  
+
   const ChangeFuelType({required this.fuelType});
-  
+
   @override
   List<Object?> get props => [fuelType];
 }
@@ -47,9 +47,9 @@ class RefreshMapData extends MapEvent {
 /// Evento: Seleccionar una gasolinera en el mapa
 class SelectStation extends MapEvent {
   final GasStation? station; // null para deseleccionar
-  
+
   const SelectStation({this.station});
-  
+
   @override
   List<Object?> get props => [station];
 }
@@ -57,9 +57,9 @@ class SelectStation extends MapEvent {
 /// Evento: Cambiar radio de búsqueda (cuando se modifica desde configuración)
 class ChangeSearchRadius extends MapEvent {
   final int radiusKm;
-  
+
   const ChangeSearchRadius({required this.radiusKm});
-  
+
   @override
   List<Object?> get props => [radiusKm];
 }
