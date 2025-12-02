@@ -153,23 +153,86 @@ Solo advertencias menores de estilo (prefer_const_constructors, avoid_print)
   * Manejo robusto de casos edge (lista vacía, precio único, precios iguales)
 - Validación: flutter analyze sin errores, flutter test 8/8 pass
 
-### Paso 16: Añadir funcionalidad de recentrado
+### Paso 16: Añadir funcionalidad de recentrado ✅ COMPLETADO
 - Botón de "Mi ubicación"
 - Actualizar mapa con nueva posición
 
-### Paso 17: Implementar actualización automática
+**Estado:** ✅ Completado el 1 de diciembre de 2025
+- Documentación: PASO_16_INSTRUCCIONES.md
+- Resumen: PASO_16_COMPLETADO.md
+- Implementación: lib/presentation/screens/map_screen.dart (390 líneas)
+- Pruebas: test/presentation/screens/map_screen_test.dart (9 tests, 100% pass)
+- Funcionalidades:
+  * FloatingActionButton en esquina inferior derecha con icono my_location
+  * Método _recenterMap() con GPS de alta precisión (LocationAccuracy.high)
+  * Animación suave de cámara con zoom 13.0
+  * Actualización de _currentPosition tras recentrado
+  * Manejo de errores con SnackBar
+  * Ocultación de botón durante carga o error
+  * Preparado para integración futura con BLoC (Paso 8)
+- Validación: flutter analyze sin errores, 9/9 tests pasados
+- Características:
+  * Código pre-existente verificado y validado
+  * Cumplimiento 100% de especificaciones (12/12)
+  * TODO marcado para recarga de gasolineras (Paso 8)
+
+### Paso 17: Implementar actualización automática ✅ COMPLETADO
 - Timer periódico en foreground
 - Comparación de datos frescos vs caché
 - Notificación silenciosa de actualización
+
+**Estado:** ✅ Completado el 1 de diciembre de 2025
+- Documentación: PASO_17_INSTRUCCIONES.md
+- Resumen: PASO_17_COMPLETADO.md
+- Implementación: lib/services/data_sync_service.dart (163 líneas)
+- Modificaciones:
+  * lib/data/repositories/gas_station_repository_impl.dart - método updateCache()
+  * lib/services/database_service.dart - clearAllStations(), updateLastSyncTime()
+  * lib/presentation/screens/map_screen.dart - integración con callbacks
+- Funcionalidades:
+  * Timer periódico cada 30 minutos con Timer.periodic()
+  * Verificación de conectividad con connectivity_plus
+  * Comparación inteligente de datos (cantidad + precios de muestra)
+  * Actualización de caché solo si hay cambios detectados
+  * Callbacks onDataUpdated y onSyncError para notificación a UI
+  * SnackBar sutil "Datos actualizados" tras sincronización exitosa
+  * Manejo robusto de errores sin interrumpir usuario
+  * Detención correcta de timer en dispose()
+- Validación: flutter analyze 0 errores (solo warnings de print)
+- Dependencias: connectivity_plus: ^7.0.0 agregada
+- Características:
+  * Sincronización silenciosa en segundo plano
+  * Tolerante a fallos de red y API
+  * Logs detallados para debugging
+  * Preparado para integración con BLoC (Paso 8)
+  * TODOs marcados para activación con repositorio real
 
 ---
 
 ## FASE 6: PERMISOS Y CONFIGURACIÓN
 
-### Paso 18: Configurar permisos Android
+### Paso 18: Configurar permisos Android ✅ COMPLETADO
 - Permisos de ubicación en AndroidManifest.xml
 - Permisos de internet
 - Gestión de solicitud de permisos en tiempo de ejecución
+
+**Estado:** ✅ Completado el 1 de diciembre de 2025
+- Documentación: PASO_18_INSTRUCCIONES.md
+- Resumen: PASO_18_COMPLETADO.md
+- Validación: Permisos ya configurados desde pasos iniciales
+- AndroidManifest.xml:
+  * INTERNET (permiso normal) - Línea 3
+  * ACCESS_FINE_LOCATION (permiso peligroso) - Línea 4
+  * ACCESS_COARSE_LOCATION (permiso peligroso) - Línea 5
+- Manejo en runtime:
+  * _checkLocationPermission() en MapScreen
+  * Diálogo para permisos denegados permanentemente
+  * openAppSettings() para abrir configuración de Android
+- Dependencias:
+  * geolocator: ^10.1.0 (gestión de GPS)
+  * permission_handler: ^11.0.1 (permisos en runtime)
+- Validación: flutter analyze - 0 errores
+- Cumplimiento: 13/13 criterios de aceptación (100%)
 
 ### Paso 19: Configurar Google Maps API
 - Obtener API Key de Google Cloud

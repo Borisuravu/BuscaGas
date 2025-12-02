@@ -6,6 +6,10 @@ import 'package:buscagas/core/constants/app_constants.dart';
 import 'package:buscagas/domain/entities/fuel_type.dart';
 import 'package:buscagas/domain/entities/app_settings.dart';
 import 'package:buscagas/presentation/screens/settings_screen.dart';
+import 'package:buscagas/services/data_sync_service.dart';
+import 'package:buscagas/data/repositories/gas_station_repository_impl.dart';
+import 'package:buscagas/data/datasources/remote/api_datasource.dart';
+import 'package:buscagas/data/datasources/local/database_datasource.dart';
 
 /// Pantalla principal con mapa interactivo
 /// 
@@ -29,6 +33,7 @@ class _MapScreenState extends State<MapScreen> {
   FuelType _selectedFuel = FuelType.gasolina95;
   bool _isLoading = true;
   String? _errorMessage;
+  DataSyncService? _dataSyncService;
   
   // TODO: Añadir lista de gasolineras desde repositorio en pasos futuros
   // TODO: Añadir markers set en pasos futuros
@@ -38,11 +43,13 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _initializeMap();
+    _initializeDataSync();
   }
   
   @override
   void dispose() {
     _mapController?.dispose();
+    _dataSyncService?.dispose();
     super.dispose();
   }
   
@@ -198,6 +205,63 @@ class _MapScreenState extends State<MapScreen> {
         ],
       ),
     );
+  }
+  
+  /// Inicializar servicio de sincronización automática
+  void _initializeDataSync() {
+    try {
+      // Crear instancias de data sources y repositorio
+      final apiDataSource = ApiDataSource();
+      final databaseDataSource = DatabaseDataSource();
+      final repository = GasStationRepositoryImpl(
+        apiDataSource,
+        databaseDataSource,
+      );
+      
+      // Inicializar servicio de sincronización
+      _dataSyncService = DataSyncService(repository);
+      
+      // Configurar callbacks
+      _dataSyncService!.onDataUpdated = _onDataSyncCompleted;
+      _dataSyncService!.onSyncError = _onDataSyncError;
+      
+      // Iniciar sincronización periódica
+      _dataSyncService!.startPeriodicSync();
+      
+      print('🔄 Servicio de sincronización iniciado correctamente');
+    } catch (e) {
+      print('❌ Error al inicializar servicio de sincronización: $e');
+    }
+  }
+  
+  /// Callback cuando se completa la sincronización de datos
+  void _onDataSyncCompleted() {
+    if (!mounted) return;
+    
+    print('✅ Datos sincronizados, recargando marcadores...');
+    
+    // TODO: Recargar gasolineras desde caché actualizada
+    // Esto se implementará en Paso 8 (BLoC)
+    // context.read<MapBloc>().add(ReloadStations());
+    
+    // Mostrar notificación sutil (opcional)
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Datos actualizados'),
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+  
+  /// Callback cuando hay error en sincronización
+  void _onDataSyncError(String error) {
+    if (!mounted) return;
+    
+    print('⚠️  Error de sincronización: $error');
+    
+    // No mostrar error al usuario si es solo falta de conexión
+    // La app funciona con caché
   }
   
   /// Construir AppBar
