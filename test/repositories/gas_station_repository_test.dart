@@ -18,7 +18,7 @@ void main() {
     late GasStationRepository repository;
     late MockApiDataSource mockApiDataSource;
     late MockDatabaseDataSource mockDatabaseDataSource;
-    
+
     setUp(() {
       mockApiDataSource = MockApiDataSource();
       mockDatabaseDataSource = MockDatabaseDataSource();
@@ -27,17 +27,18 @@ void main() {
         mockDatabaseDataSource,
       );
     });
-    
+
     // ==================== TEST 1: fetchRemoteStations ====================
-    
-    test('fetchRemoteStations debe descargar y convertir datos de la API', () async {
+
+    test('fetchRemoteStations debe descargar y convertir datos de la API',
+        () async {
       // Arrange: Usar datos de prueba
       when(mockApiDataSource.fetchAllStations())
           .thenAnswer((_) async => [testModel1, testModel2]);
-      
+
       // Act: Ejecutar método
       final result = await repository.fetchRemoteStations();
-      
+
       // Assert: Verificar resultados
       expect(result, isA<List<GasStation>>());
       expect(result.length, 2);
@@ -46,25 +47,25 @@ void main() {
       expect(result[0].latitude, 40.4168);
       expect(result[1].id, '2');
       expect(result[1].name, 'Cepsa Barcelona');
-      
+
       // Verificar que se llamó al API
       verify(mockApiDataSource.fetchAllStations()).called(1);
     });
-    
+
     test('fetchRemoteStations debe relanzar ApiException', () async {
       // Arrange
-      when(mockApiDataSource.fetchAllStations())
-          .thenThrow(ApiException('Error de red', type: ApiErrorType.noConnection));
-      
+      when(mockApiDataSource.fetchAllStations()).thenThrow(
+          ApiException('Error de red', type: ApiErrorType.noConnection));
+
       // Act & Assert
       expect(
         () => repository.fetchRemoteStations(),
         throwsA(isA<ApiException>()),
       );
     });
-    
+
     // ==================== TEST 2: getCachedStations ====================
-    
+
     test('getCachedStations debe obtener datos de la base de datos', () async {
       // Arrange
       final mockCachedStations = [
@@ -79,33 +80,33 @@ void main() {
           prices: [],
         ),
       ];
-      
+
       when(mockDatabaseDataSource.getAllStations())
           .thenAnswer((_) async => mockCachedStations);
-      
+
       // Act
       final result = await repository.getCachedStations();
-      
+
       // Assert
       expect(result, mockCachedStations);
       expect(result.length, 1);
       verify(mockDatabaseDataSource.getAllStations()).called(1);
     });
-    
-    test('getCachedStations debe retornar lista vacía si no hay caché', () async {
+
+    test('getCachedStations debe retornar lista vacía si no hay caché',
+        () async {
       // Arrange
-      when(mockDatabaseDataSource.getAllStations())
-          .thenAnswer((_) async => []);
-      
+      when(mockDatabaseDataSource.getAllStations()).thenAnswer((_) async => []);
+
       // Act
       final result = await repository.getCachedStations();
-      
+
       // Assert
       expect(result, isEmpty);
     });
-    
+
     // ==================== TEST 3: updateCache ====================
-    
+
     test('updateCache debe borrar datos antiguos y guardar nuevos', () async {
       // Arrange
       final newStations = [
@@ -120,25 +121,23 @@ void main() {
           prices: [],
         ),
       ];
-      
-      when(mockDatabaseDataSource.clearAll())
-          .thenAnswer((_) async => {});
-      when(mockDatabaseDataSource.insertBatch(any))
-          .thenAnswer((_) async => {});
+
+      when(mockDatabaseDataSource.clearAll()).thenAnswer((_) async => {});
+      when(mockDatabaseDataSource.insertBatch(any)).thenAnswer((_) async => {});
       when(mockDatabaseDataSource.updateLastSync(any))
           .thenAnswer((_) async => {});
-      
+
       // Act
       await repository.updateCache(newStations);
-      
+
       // Assert
       verify(mockDatabaseDataSource.clearAll()).called(1);
       verify(mockDatabaseDataSource.insertBatch(newStations)).called(1);
       verify(mockDatabaseDataSource.updateLastSync(any)).called(1);
     });
-    
+
     // ==================== TEST 4: getNearbyStations ====================
-    
+
     test('getNearbyStations debe filtrar y ordenar por distancia', () async {
       // Arrange: Crear estaciones a diferentes distancias
       final allStations = [
@@ -146,17 +145,17 @@ void main() {
         testStation2, // Barcelona - lejos
         testStation3, // Valencia - medio
       ];
-      
+
       when(mockDatabaseDataSource.getAllStations())
           .thenAnswer((_) async => allStations);
-      
+
       // Act: Buscar con radio de 5 km
       final result = await repository.getNearbyStations(
         latitude: 40.4168,
         longitude: -3.7038,
         radiusKm: 5.0,
       );
-      
+
       // Assert: solo estaciones dentro del radio (Madrid 40.4168,-3.7038)
       expect(result.length, greaterThan(0));
       // Verificar que están ordenadas por distancia (la primera es la más cercana)
@@ -164,8 +163,10 @@ void main() {
         expect(result.first, isA<GasStation>());
       }
     });
-    
-    test('getNearbyStations debe retornar lista vacía si no hay estaciones cercanas', () async {
+
+    test(
+        'getNearbyStations debe retornar lista vacía si no hay estaciones cercanas',
+        () async {
       // Arrange
       final allStations = [
         GasStation(
@@ -179,51 +180,49 @@ void main() {
           prices: [],
         ),
       ];
-      
+
       when(mockDatabaseDataSource.getAllStations())
           .thenAnswer((_) async => allStations);
-      
+
       // Act: Buscar en Madrid con radio de 10 km
       final result = await repository.getNearbyStations(
         latitude: 40.4168,
         longitude: -3.7038,
         radiusKm: 10.0,
       );
-      
+
       // Assert
       expect(result, isEmpty);
     });
-    
+
     // ==================== TEST 5: Flujo completo ====================
-    
+
     test('Flujo completo: fetch → update cache → get nearby', () async {
       // Arrange: Mock API data
       final mockModels = [testModel1, testModel2];
-      
+
       when(mockApiDataSource.fetchAllStations())
           .thenAnswer((_) async => mockModels);
-      when(mockDatabaseDataSource.clearAll())
-          .thenAnswer((_) async => {});
-      when(mockDatabaseDataSource.insertBatch(any))
-          .thenAnswer((_) async => {});
+      when(mockDatabaseDataSource.clearAll()).thenAnswer((_) async => {});
+      when(mockDatabaseDataSource.insertBatch(any)).thenAnswer((_) async => {});
       when(mockDatabaseDataSource.updateLastSync(any))
           .thenAnswer((_) async => {});
-      
+
       // Act: Paso 1 - Fetch remote
       final remoteStations = await repository.fetchRemoteStations();
       expect(remoteStations.length, 2);
-      
+
       // Act: Paso 2 - Update cache
       await repository.updateCache(remoteStations);
       verify(mockDatabaseDataSource.clearAll()).called(1);
       verify(mockDatabaseDataSource.insertBatch(any)).called(1);
-      
+
       // Act: Paso 3 - Get cached
       when(mockDatabaseDataSource.getAllStations())
           .thenAnswer((_) async => remoteStations);
       final cachedStations = await repository.getCachedStations();
       expect(cachedStations.length, 2);
-      
+
       // Act: Paso 4 - Get nearby
       final nearbyStations = await repository.getNearbyStations(
         latitude: 40.4168,

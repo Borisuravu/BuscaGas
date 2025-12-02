@@ -9,7 +9,7 @@ import 'package:buscagas/domain/entities/fuel_type.dart';
 //    sqflite_common_ffi: ^2.3.0
 // 2. Descomentar las siguientes líneas:
 // import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-// 
+//
 // void main() {
 //   setUpAll(() {
 //     sqfliteFfiInit();
@@ -20,26 +20,26 @@ import 'package:buscagas/domain/entities/fuel_type.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  
+
   group('DatabaseService Tests', () {
     late DatabaseService dbService;
-    
+
     setUp(() async {
       dbService = DatabaseService();
       await dbService.initialize();
       await dbService.clearCache();
     });
-    
+
     tearDown(() async {
       await dbService.clearCache();
     });
-    
+
     test('Debe inicializar la base de datos sin errores', () async {
       await dbService.initialize();
       final hasData = await dbService.hasData();
       expect(hasData, false); // Debería estar vacía después de clearCache
     });
-    
+
     test('Debe guardar y recuperar gasolineras', () async {
       final testStations = [
         GasStation(
@@ -75,15 +75,15 @@ void main() {
           ],
         ),
       ];
-      
+
       await dbService.saveStations(testStations);
-      
+
       final retrieved = await dbService.getAllStations();
       expect(retrieved.length, 2);
       expect(retrieved[0].name, 'Test Station 1');
       expect(retrieved[1].name, 'Test Station 2');
     });
-    
+
     test('Debe obtener gasolineras cercanas', () async {
       final testStations = [
         GasStation(
@@ -107,36 +107,36 @@ void main() {
           prices: [],
         ),
       ];
-      
+
       await dbService.saveStations(testStations);
-      
+
       final nearby = await dbService.getNearbyStations(
         latitude: 40.4168,
         longitude: -3.7038,
         radiusKm: 10,
       );
-      
+
       expect(nearby.length, 1);
       expect(nearby[0].name, 'Cerca');
     });
-    
+
     test('Debe actualizar configuración', () async {
       await dbService.updateSearchRadius(20);
       await dbService.updatePreferredFuel(FuelType.dieselGasoleoA);
       await dbService.updateDarkMode(true);
-      
+
       final settings = await dbService.getAppSettings();
       expect(settings?['search_radius'], 20);
       expect(settings?['preferred_fuel'], 'dieselGasoleoA');
       expect(settings?['dark_mode'], 1);
     });
-    
+
     test('Debe verificar caché desactualizado', () async {
       final isStale = await dbService.isCacheStale(
         maxAge: const Duration(seconds: 1),
       );
       expect(isStale, true); // No hay datos, debería ser stale
-      
+
       // Guardar datos
       await dbService.saveStations([
         GasStation(
@@ -150,7 +150,7 @@ void main() {
           prices: [],
         ),
       ]);
-      
+
       final isStaleNow = await dbService.isCacheStale(
         maxAge: const Duration(hours: 24),
       );

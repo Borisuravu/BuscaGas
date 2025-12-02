@@ -7,11 +7,11 @@ import 'package:buscagas/domain/entities/fuel_price.dart';
 void main() {
   group('FilterByFuelTypeUseCase', () {
     late FilterByFuelTypeUseCase useCase;
-    
+
     setUp(() {
       useCase = FilterByFuelTypeUseCase();
     });
-    
+
     test('debe filtrar gasolineras que tienen gasolina95', () {
       // Arrange
       final stations = [
@@ -42,18 +42,18 @@ void main() {
           ],
         ),
       ];
-      
+
       // Act
       final result = useCase(
         stations: stations,
         fuelType: FuelType.gasolina95,
       );
-      
+
       // Assert
       expect(result.length, 1);
       expect(result.first.name, 'Con Gasolina');
     });
-    
+
     test('debe retornar lista vacía si ninguna tiene el combustible', () {
       // Arrange
       final stations = [
@@ -65,13 +65,13 @@ void main() {
           prices: [],
         ),
       ];
-      
+
       // Act
       final result = useCase(
         stations: stations,
         fuelType: FuelType.gasolina95,
       );
-      
+
       // Assert
       expect(result, isEmpty);
     });

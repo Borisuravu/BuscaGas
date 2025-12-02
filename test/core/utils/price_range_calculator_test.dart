@@ -34,15 +34,15 @@ void main() {
 
       // Assert: Verificar distribución ~33% en cada rango
       final counts = PriceRangeCalculator.countByRange(stations);
-      
+
       expect(counts[PriceRange.low], greaterThanOrEqualTo(2));
       expect(counts[PriceRange.medium], greaterThanOrEqualTo(2));
       expect(counts[PriceRange.high], greaterThanOrEqualTo(2));
-      
+
       // Verificar que los precios más bajos están en low
       expect(stations[0].priceRange, equals(PriceRange.low));
       expect(stations[1].priceRange, equals(PriceRange.low));
-      
+
       // Verificar que los precios más altos están en high
       expect(stations[8].priceRange, equals(PriceRange.high));
       expect(stations[9].priceRange, equals(PriceRange.high));
@@ -321,7 +321,7 @@ void main() {
       // P66 debería estar alrededor de 1.66
       expect(stats['p33'], closeTo(1.33, 0.05));
       expect(stats['p66'], closeTo(1.66, 0.05));
-      
+
       // Verificar distribución aproximadamente uniforme
       final counts = PriceRangeCalculator.countByRange(stations);
       expect(counts[PriceRange.low], greaterThanOrEqualTo(25));
@@ -333,4 +333,3 @@ void main() {
     });
   });
 }
-

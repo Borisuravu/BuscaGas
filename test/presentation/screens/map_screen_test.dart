@@ -38,8 +38,7 @@ void main() {
   });
 
   group('MapScreen - Estructura', () {
-    testWidgets('debe tener Scaffold con AppBar',
-        (WidgetTester tester) async {
+    testWidgets('debe tener Scaffold con AppBar', (WidgetTester tester) async {
       // Arrange & Act
       await tester.pumpWidget(
         const MaterialApp(home: MapScreen()),
@@ -70,11 +69,13 @@ void main() {
       // Este test verifica que la funcionalidad está documentada
       // La implementación real se valida manualmente debido a
       // dependencias de GPS y permisos
-      expect(true, isTrue, reason: 'Método _recenterMap() implementado en línea 142');
+      expect(true, isTrue,
+          reason: 'Método _recenterMap() implementado en línea 142');
     });
 
     test('debe tener método _buildRecenterButton implementado', () {
-      expect(true, isTrue, reason: 'Método _buildRecenterButton() implementado en línea 310');
+      expect(true, isTrue,
+          reason: 'Método _buildRecenterButton() implementado en línea 310');
     });
 
     test('FloatingActionButton debe tener propiedades correctas', () {
@@ -82,17 +83,20 @@ void main() {
       // - onPressed: _recenterMap
       // - tooltip: 'Mi ubicación'
       // - child: Icon(Icons.my_location)
-      expect(true, isTrue, reason: 'FloatingActionButton correctamente configurado');
+      expect(true, isTrue,
+          reason: 'FloatingActionButton correctamente configurado');
     });
 
     test('botón debe ocultarse cuando _isLoading es true', () {
       // Lógica en línea 385: _isLoading || _errorMessage != null ? null : _buildRecenterButton()
-      expect(true, isTrue, reason: 'Visibilidad condicionada a estado de carga');
+      expect(true, isTrue,
+          reason: 'Visibilidad condicionada a estado de carga');
     });
 
     test('botón debe ocultarse cuando _errorMessage no es null', () {
       // Lógica en línea 385
-      expect(true, isTrue, reason: 'Visibilidad condicionada a estado de error');
+      expect(true, isTrue,
+          reason: 'Visibilidad condicionada a estado de error');
     });
   });
 }

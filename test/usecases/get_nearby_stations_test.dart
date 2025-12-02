@@ -13,12 +13,12 @@ void main() {
   group('GetNearbyStationsUseCase', () {
     late GetNearbyStationsUseCase useCase;
     late MockGasStationRepository mockRepository;
-    
+
     setUp(() {
       mockRepository = MockGasStationRepository();
       useCase = GetNearbyStationsUseCase(mockRepository);
     });
-    
+
     test('debe retornar lista de gasolineras cercanas', () async {
       // Arrange
       final mockStations = [
@@ -32,32 +32,32 @@ void main() {
           operator: 'Repsol',
         ),
       ];
-      
+
       when(mockRepository.getNearbyStations(
         latitude: 40.4168,
         longitude: -3.7038,
         radiusKm: 10.0,
       )).thenAnswer((_) async => mockStations);
-      
+
       // Act
       final result = await useCase(
         latitude: 40.4168,
         longitude: -3.7038,
         radiusKm: 10.0,
       );
-      
+
       // Assert
       expect(result, mockStations);
       expect(result.length, 1);
       expect(result.first.name, 'Repsol Madrid');
-      
+
       verify(mockRepository.getNearbyStations(
         latitude: 40.4168,
         longitude: -3.7038,
         radiusKm: 10.0,
       )).called(1);
     });
-    
+
     test('debe lanzar excepción si el repositorio falla', () async {
       // Arrange
       when(mockRepository.getNearbyStations(
@@ -65,7 +65,7 @@ void main() {
         longitude: anyNamed('longitude'),
         radiusKm: anyNamed('radiusKm'),
       )).thenThrow(Exception('Error de red'));
-      
+
       // Act & Assert
       expect(
         () => useCase(latitude: 40.4168, longitude: -3.7038, radiusKm: 10.0),
