@@ -324,7 +324,9 @@ class _MapScreenState extends State<MapScreen> {
           Positioned(
             bottom: 16,
             left: 16,
-            right: 16,
+            // Dejar espacio a la derecha para el FloatingActionButton
+            // Tamaño del FAB (56) + padding (16) = 72; usamos 72 para equilibrio
+            right: 72,
             child: StationInfoCard(
               station: state.selectedStation!,
               selectedFuel: state.currentFuelType,
