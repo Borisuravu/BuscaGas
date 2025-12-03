@@ -4,7 +4,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:buscagas/core/constants/app_constants.dart';
 import 'package:buscagas/domain/entities/app_settings.dart';
 import 'package:buscagas/presentation/screens/map_screen.dart';
-import 'package:buscagas/services/database_service.dart';
 import 'package:buscagas/data/repositories/gas_station_repository_impl.dart';
 import 'package:buscagas/data/datasources/remote/api_datasource.dart';
 import 'package:buscagas/data/datasources/local/database_datasource.dart';
@@ -130,8 +129,8 @@ class _SplashScreenState extends State<SplashScreen> {
       // 4. Inicializar base de datos
       _updateStatus('Inicializando base de datos...', progress: 0.2);
       try {
-        final dbService = DatabaseService();
-        await dbService.initialize();
+        final dbDataSource = DatabaseDataSource();
+        await dbDataSource.hasData(); // Verifica que la BD esté lista
         debugPrint('✅ Base de datos inicializada');
       } catch (e) {
         debugPrint('❌ Error inicializando BD: $e');

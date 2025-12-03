@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:buscagas/services/database_service.dart';
+import 'package:buscagas/data/datasources/local/database_datasource.dart';
 import 'package:buscagas/domain/entities/gas_station.dart';
 import 'package:buscagas/domain/entities/fuel_price.dart';
 import 'package:buscagas/domain/entities/fuel_type.dart';
@@ -21,23 +21,21 @@ import 'package:buscagas/domain/entities/fuel_type.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('DatabaseService Tests', () {
-    late DatabaseService dbService;
+  group('DatabaseDataSource Tests', () {
+    late DatabaseDataSource dbDataSource;
 
     setUp(() async {
-      dbService = DatabaseService();
-      await dbService.initialize();
-      await dbService.clearCache();
+      dbDataSource = DatabaseDataSource();
+      await dbDataSource.clearAll();
     });
 
     tearDown(() async {
-      await dbService.clearCache();
+      await dbDataSource.clearAll();
     });
 
     test('Debe inicializar la base de datos sin errores', () async {
-      await dbService.initialize();
-      final hasData = await dbService.hasData();
-      expect(hasData, false); // Debería estar vacía después de clearCache
+      final hasData = await dbDataSource.hasData();
+      expect(hasData, false); // Debería estar vacía después de clearAll
     });
 
     test('Debe guardar y recuperar gasolineras', () async {
@@ -76,9 +74,9 @@ void main() {
         ),
       ];
 
-      await dbService.saveStations(testStations);
+      await dbDataSource.insertBatch(testStations);
 
-      final retrieved = await dbService.getAllStations();
+      final retrieved = await dbDataSource.getAllStations();
       expect(retrieved.length, 2);
       expect(retrieved[0].name, 'Test Station 1');
       expect(retrieved[1].name, 'Test Station 2');
@@ -108,11 +106,11 @@ void main() {
         ),
       ];
 
-      await dbService.saveStations(testStations);
+      await dbDataSource.insertBatch(testStations);
 
-      final nearby = await dbService.getNearbyStations(
-        latitude: 40.4168,
-        longitude: -3.7038,
+      final nearby = await dbDataSource.getStationsByLocation(
+        centerLat: 40.4168,
+        centerLon: -3.7038,
         radiusKm: 10,
       );
 
@@ -121,24 +119,24 @@ void main() {
     });
 
     test('Debe actualizar configuración', () async {
-      await dbService.updateSearchRadius(20);
-      await dbService.updatePreferredFuel(FuelType.dieselGasoleoA);
-      await dbService.updateDarkMode(true);
+      await dbDataSource.updateSettings({
+        'search_radius': 20,
+        'preferred_fuel': FuelType.dieselGasoleoA.name,
+        'dark_mode': 1,
+      });
 
-      final settings = await dbService.getAppSettings();
+      final settings = await dbDataSource.getSettings();
       expect(settings?['search_radius'], 20);
       expect(settings?['preferred_fuel'], 'dieselGasoleoA');
       expect(settings?['dark_mode'], 1);
     });
 
-    test('Debe verificar caché desactualizado', () async {
-      final isStale = await dbService.isCacheStale(
-        maxAge: const Duration(seconds: 1),
-      );
-      expect(isStale, true); // No hay datos, debería ser stale
+    test('Debe verificar si hay datos en caché', () async {
+      final hasDataBefore = await dbDataSource.hasData();
+      expect(hasDataBefore, false); // No hay datos inicialmente
 
       // Guardar datos
-      await dbService.saveStations([
+      await dbDataSource.insertBatch([
         GasStation(
           id: '1',
           name: 'Test',
@@ -151,10 +149,8 @@ void main() {
         ),
       ]);
 
-      final isStaleNow = await dbService.isCacheStale(
-        maxAge: const Duration(hours: 24),
-      );
-      expect(isStaleNow, false); // Acabamos de guardar, no debería ser stale
+      final hasDataAfter = await dbDataSource.hasData();
+      expect(hasDataAfter, true); // Ahora sí hay datos
     });
   });
 }

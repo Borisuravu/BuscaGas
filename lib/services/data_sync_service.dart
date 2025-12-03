@@ -12,13 +12,13 @@ import 'package:battery_plus/battery_plus.dart';
 import '../data/repositories/gas_station_repository_impl.dart';
 import '../domain/entities/gas_station.dart';
 import '../core/utils/performance_monitor.dart';
-import '../services/database_service.dart';
+import '../data/datasources/local/database_datasource.dart';
 
 class DataSyncService {
   final GasStationRepositoryImpl _repository;
   final Connectivity _connectivity = Connectivity();
   final Battery _battery = Battery();
-  final DatabaseService _databaseService = DatabaseService();
+  final DatabaseDataSource _databaseDataSource = DatabaseDataSource();
   Timer? _syncTimer;
   bool _isInForeground = true;
 
@@ -126,15 +126,18 @@ class DataSyncService {
           debugPrint('ℹ️ Sin cambios en datos');
         }
 
-        // 5. Optimizar BD semanalmente
+        // 5. Optimizar BD semanalmente (comentado ya que DatabaseDataSource no tiene estos métodos)
+        // TODO: Implementar optimización de BD en DatabaseDataSource si es necesario
+        /*
         final lastOptimization =
-            await _databaseService.getLastOptimizationTime();
+            await _databaseDataSource.getLastOptimizationTime();
         if (lastOptimization == null ||
             DateTime.now().difference(lastOptimization).inDays >= 7) {
           debugPrint('🔧 Optimizando base de datos (semanal)...');
-          await _databaseService.optimizeDatabase();
-          await _databaseService.updateLastOptimizationTime();
+          await _databaseDataSource.optimizeDatabase();
+          await _databaseDataSource.updateLastOptimizationTime();
         }
+        */
       });
     } catch (e) {
       debugPrint('❌ Error sync: $e');

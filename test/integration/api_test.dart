@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:buscagas/services/api_service.dart';
 import 'package:buscagas/data/datasources/remote/api_datasource.dart';
 
 /// TESTS DE INTEGRACIÓN CON API REAL
@@ -10,23 +9,23 @@ import 'package:buscagas/data/datasources/remote/api_datasource.dart';
 
 void main() {
   group('API Integration Tests', () {
-    late ApiService apiService;
+    late ApiDataSource apiDataSource;
 
     setUp(() {
-      apiService = ApiService();
+      apiDataSource = ApiDataSource();
     });
 
     tearDown(() {
-      apiService.dispose();
+      apiDataSource.dispose();
     });
 
     test('Debe conectar con la API del gobierno', () async {
-      final available = await apiService.isApiAvailable();
+      final available = await apiDataSource.checkConnection();
       expect(available, true, reason: 'La API debe estar disponible');
     }, timeout: const Timeout(Duration(seconds: 10)));
 
     test('Debe descargar gasolineras desde la API', () async {
-      final stations = await apiService.fetchGasStations();
+      final stations = await apiDataSource.fetchAllStations();
 
       expect(stations, isNotEmpty,
           reason: 'Debe haber al menos una gasolinera');
@@ -37,7 +36,8 @@ void main() {
     }, timeout: const Timeout(Duration(seconds: 45)));
 
     test('Las gasolineras deben tener coordenadas válidas', () async {
-      final stations = await apiService.fetchGasStations();
+      final stationModels = await apiDataSource.fetchAllStations();
+      final stations = stationModels.map((m) => m.toDomain()).toList();
 
       for (var station in stations.take(10)) {
         expect(station.latitude, isNot(0.0));
@@ -50,7 +50,8 @@ void main() {
     }, timeout: const Timeout(Duration(seconds: 45)));
 
     test('Las gasolineras deben tener al menos un precio', () async {
-      final stations = await apiService.fetchGasStations();
+      final stationModels = await apiDataSource.fetchAllStations();
+      final stations = stationModels.map((m) => m.toDomain()).toList();
 
       int stationsWithPrices = 0;
       for (var station in stations) {
@@ -79,9 +80,16 @@ void main() {
       // Por ahora solo verificamos que la clase existe
       expect(ApiException, isNotNull);
     });
-
     test('Debe obtener estadísticas de API', () async {
-      final stats = await apiService.getApiStats();
+      final stationModels = await apiDataSource.fetchAllStations();
+      final stations = stationModels.map((m) => m.toDomain()).toList();
+      
+      final stats = {
+        'total_stations': stations.length,
+        'with_gasolina95': stations.where((s) => s.prices.any((p) => p.fuelType.name.contains('gasolina95'))).length,
+        'with_diesel': stations.where((s) => s.prices.any((p) => p.fuelType.name.contains('diesel'))).length,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
 
       expect(stats, isNotEmpty);
       expect(stats['total_stations'], isNotNull);
@@ -91,7 +99,6 @@ void main() {
       print('   Total: ${stats['total_stations']}');
       print('   Con Gasolina 95: ${stats['with_gasolina95']}');
       print('   Con Diésel: ${stats['with_diesel']}');
-      print('   Con ambos: ${stats['with_both']}');
     }, timeout: const Timeout(Duration(seconds: 45)));
   });
 

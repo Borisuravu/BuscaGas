@@ -3,7 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:buscagas/domain/entities/fuel_type.dart';
-import 'package:buscagas/services/database_service.dart';
+import 'package:buscagas/data/datasources/local/database_datasource.dart';
 
 class AppSettings {
   int searchRadius; // 5, 10, 20, 50
@@ -20,12 +20,14 @@ class AppSettings {
 
   Future<void> save() async {
     try {
-      final dbService = DatabaseService();
+      final dbDataSource = DatabaseDataSource();
 
       // Guardar en base de datos
-      await dbService.updateSearchRadius(searchRadius);
-      await dbService.updatePreferredFuel(preferredFuel);
-      await dbService.updateDarkMode(darkMode);
+      await dbDataSource.updateSettings({
+        'search_radius': searchRadius,
+        'preferred_fuel': preferredFuel.name,
+        'dark_mode': darkMode ? 1 : 0,
+      });
 
       debugPrint('✅ Configuración guardada en BD');
     } catch (e) {
@@ -35,8 +37,8 @@ class AppSettings {
 
   static Future<AppSettings> load() async {
     try {
-      final dbService = DatabaseService();
-      final settings = await dbService.getAppSettings();
+      final dbDataSource = DatabaseDataSource();
+      final settings = await dbDataSource.getSettings();
 
       if (settings != null) {
         // Cargar desde base de datos
