@@ -54,7 +54,7 @@ class StationInfoCard extends StatelessWidget {
                     child: InkWell(
                       onTap: onClose,
                       borderRadius: BorderRadius.circular(20),
-                      child: SizedBox(
+                      child: const SizedBox(
                         width: 40,
                         height: 40,
                         child: Center(
