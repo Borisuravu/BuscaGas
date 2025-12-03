@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:buscagas/core/app_initializer.dart';
 import 'package:buscagas/core/constants/app_constants.dart';
 import 'package:buscagas/domain/entities/app_settings.dart';
 import 'package:buscagas/presentation/screens/map_screen.dart';
-import 'package:buscagas/data/repositories/gas_station_repository_impl.dart';
-import 'package:buscagas/data/datasources/remote/api_datasource.dart';
-import 'package:buscagas/data/datasources/local/database_datasource.dart';
 import 'package:buscagas/data/models/gas_station_model.dart';
-import 'package:buscagas/main.dart' as main_app;
 
 /// Pantalla de inicio (Splash Screen)
 ///
@@ -84,8 +81,8 @@ class _SplashScreenState extends State<SplashScreen> {
       settings.darkMode = darkMode;
       await settings.save();
 
-      // Recargar settings en la app principal para aplicar el tema
-      main_app.appKey.currentState?.reloadSettings();
+      // Recargar settings para aplicar el tema
+      await AppInitializer.reloadSettings();
     } catch (e) {
       debugPrint('Error guardando preferencia de tema: $e');
       if (mounted) {
@@ -128,18 +125,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
       // 4. Inicializar base de datos
       _updateStatus('Inicializando base de datos...', progress: 0.2);
-      try {
-        final dbDataSource = DatabaseDataSource();
-        await dbDataSource.hasData(); // Verifica que la BD esté lista
-        debugPrint('✅ Base de datos inicializada');
-      } catch (e) {
-        debugPrint('❌ Error inicializando BD: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error al inicializar base de datos')),
-          );
-        }
-      }
+      // La base de datos ya está inicializada por AppInitializer
+      debugPrint('✅ Base de datos ya inicializada por AppInitializer');
 
       // 5. Verificar y cargar datos de gasolineras
       await _loadGasStationsData();
@@ -181,13 +168,9 @@ class _SplashScreenState extends State<SplashScreen> {
   /// Cargar datos de gasolineras desde API o caché
   Future<void> _loadGasStationsData() async {
     try {
-      // Crear instancias necesarias
-      final apiDataSource = ApiDataSource();
-      final databaseDataSource = DatabaseDataSource();
-      final repository = GasStationRepositoryImpl(
-        apiDataSource,
-        databaseDataSource,
-      );
+      // Usar repositorio del AppInitializer
+      final repository = AppInitializer.gasStationRepository;
+      final apiDataSource = AppInitializer.apiDataSource;
 
       // Verificar si hay datos en caché
       _updateStatus('Verificando caché local...', progress: 0.4);

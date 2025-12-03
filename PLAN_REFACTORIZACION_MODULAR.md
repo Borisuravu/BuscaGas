@@ -37,53 +37,59 @@
 
 ## 📦 MÓDULO 2: Crear AppInitializer
 **Tiempo estimado**: 45 minutos  
-**Estado**: ⏳ Pendiente  
+**Estado**: ✅ Completado  
 **Depende de**: Módulo 1
 
 ### Tareas:
-1. Crear archivo `lib/core/app_initializer.dart`
-2. Implementar clase `AppInitializer` con método `initialize()`
-3. Mover toda la lógica de inicialización desde `main.dart`
-4. Crear getters estáticos para acceder a servicios
-5. Simplificar `main.dart` a ~10 líneas
-6. Probar que la app inicia correctamente
+1. ✅ Crear archivo `lib/core/app_initializer.dart`
+2. ✅ Implementar clase `AppInitializer` con método `initialize()`
+3. ✅ Mover toda la lógica de inicialización desde `main.dart`
+4. ✅ Crear getters estáticos para acceder a servicios
+5. ✅ Simplificar `main.dart` a ~10 líneas
+6. ✅ Probar que la app inicia correctamente
 
 ### Archivos a crear:
-- `lib/core/app_initializer.dart`
+- ✅ `lib/core/app_initializer.dart`
 
 ### Archivos a modificar:
-- `lib/main.dart` (simplificar)
+- ✅ `lib/main.dart` (simplificado a 5 líneas)
+- ✅ `lib/presentation/screens/splash_screen.dart` (usa AppInitializer)
 
 ### Criterios de éxito:
 - ✅ `AppInitializer` creado y funcional
-- ✅ `main.dart` tiene menos de 15 líneas
+- ✅ `main.dart` tiene menos de 15 líneas (ahora tiene 5 líneas en `main()`)
 - ✅ La app inicia sin errores
 - ✅ Todos los servicios accesibles mediante `AppInitializer.xxx`
+- ✅ `flutter analyze` sin errores (solo 2 warnings y 78 info)
 
 ---
 
 ## 📦 MÓDULO 3: Eliminar GlobalKey Anti-patrón
 **Tiempo estimado**: 20 minutos  
-**Estado**: ⏳ Pendiente  
+**Estado**: ✅ Completado  
 **Depende de**: Módulo 2
 
 ### Tareas:
-1. Identificar usos de `appKey` en el código
-2. Eliminar `final GlobalKey<BuscaGasAppState> appKey = GlobalKey<BuscaGasAppState>();`
-3. Eliminar parámetro `key: appKey` de `BuscaGasApp`
-4. Actualizar `SettingsBloc` para manejar reload de settings
-5. Reemplazar `appKey.currentState?.reloadSettings()` con BLoC events
-6. Verificar funcionalidad de recarga de configuración
+1. ✅ Identificar usos de `appKey` en el código
+2. ✅ Eliminar `final GlobalKey<BuscaGasAppState> appKey = GlobalKey<BuscaGasAppState>();`
+3. ✅ Eliminar parámetro `key: appKey` de `BuscaGasApp`
+4. ✅ Implementar `ValueNotifier<ThemeMode>` en AppInitializer
+5. ✅ Reemplazar `appKey.currentState?.reloadSettings()` con `AppInitializer.reloadSettings()`
+6. ✅ Convertir `BuscaGasApp` de StatefulWidget a StatelessWidget
+7. ✅ Verificar funcionalidad de recarga de configuración
 
-### Archivos a modificar:
-- `lib/main.dart` (eliminar GlobalKey)
-- `lib/presentation/blocs/settings/settings_bloc.dart` (agregar evento reload)
-- Archivos que usan `appKey` (actualizar)
+### Archivos modificados:
+- ✅ `lib/main.dart` (eliminado GlobalKey, convertido a StatelessWidget con ValueListenableBuilder)
+- ✅ `lib/core/app_initializer.dart` (agregado themeModeNotifier)
+- ✅ `lib/presentation/screens/splash_screen.dart` (usa AppInitializer.reloadSettings())
+- ✅ `lib/presentation/screens/settings_screen.dart` (usa AppInitializer.reloadSettings())
 
 ### Criterios de éxito:
 - ✅ No hay referencias a `appKey` en el código
-- ✅ La recarga de settings funciona mediante BLoC
+- ✅ La recarga de settings funciona mediante ValueNotifier reactivo
 - ✅ La app compila y funciona correctamente
+- ✅ `flutter analyze` sin errores (solo 2 warnings y 78 info)
+- ✅ Arquitectura más limpia sin anti-patrones
 
 ---
 
@@ -315,12 +321,12 @@
 ## 📊 Resumen de Progreso
 
 ### Total de Módulos: 12
-- ⏳ Pendientes: 11
+- ⏳ Pendientes: 9
 - 🔄 En progreso: 0
-- ✅ Completados: 1
+- ✅ Completados: 3
 
 ### Tiempo Total Estimado: ~5.5 horas
-### Tiempo Invertido: ~30 minutos
+### Tiempo Invertido: ~1 hora 35 minutos
 
 ### Orden Sugerido de Ejecución:
 1. **Módulo 1** (Limpieza) - Base para todo
@@ -363,5 +369,4 @@ flutter format .
 ---
 
 **Última actualización**: 3 de diciembre de 2025  
-**Estado del proyecto**: Módulo 1 completado ✅ - Archivos duplicados eliminados y todos los imports actualizados
-**Estado del proyecto**: Iniciando refactorización
+**Estado del proyecto**: Módulos 1, 2 y 3 completados ✅ - GlobalKey eliminado, arquitectura reactiva con ValueNotifier

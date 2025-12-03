@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:buscagas/core/app_initializer.dart';
 import 'package:buscagas/domain/entities/app_settings.dart';
 import 'package:buscagas/domain/entities/fuel_type.dart';
-import 'package:buscagas/main.dart' as main_app;
 
 /// Pantalla de configuración de preferencias
 ///
@@ -131,8 +131,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         await _settings!.save();
         debugPrint('✅ Tema actualizado: ${isDark ? "Oscuro" : "Claro"}');
 
-        // Notificar a la app principal para recargar el tema
-        main_app.appKey.currentState?.reloadSettings();
+        // Recargar settings para aplicar el tema
+        await AppInitializer.reloadSettings();
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

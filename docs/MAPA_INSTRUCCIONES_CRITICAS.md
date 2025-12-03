@@ -21,6 +21,11 @@ Evita realizar cambios innecesarios en los siguientes archivos, ya que contienen
      - Permisos de ubicación (`ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`).
      - Línea que referencia el `API Key` en `<meta-data>`.
 
+4. **`lib/core/app_initializer.dart`**
+   - Centraliza la inicialización de servicios y repositorios.
+   - **No modificar la lógica de inicialización sin verificar el impacto en el mapa**.
+   - Los servicios `ApiDataSource`, `DatabaseDataSource` y `GasStationRepositoryImpl` se inicializan aquí.
+
 ---
 
 ## APIs Habilitadas en Google Cloud Console
