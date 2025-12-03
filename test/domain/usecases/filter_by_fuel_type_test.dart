@@ -255,7 +255,7 @@ void main() {
 
     test('debe funcionar con todos los tipos de combustible del enum', () {
       // Arrange
-      final allFuelTypes = FuelType.values;
+      const allFuelTypes = FuelType.values;
 
       // Act & Assert - No debe lanzar excepciones para ningún tipo
       for (var fuelType in allFuelTypes) {

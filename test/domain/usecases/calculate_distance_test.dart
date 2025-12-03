@@ -174,7 +174,7 @@ void main() {
       );
 
       // Assert - Tolerancia del ±2%
-      final tolerance = expectedDistance * 0.02;
+      const tolerance = expectedDistance * 0.02;
       expect(distance, greaterThan(expectedDistance - tolerance));
       expect(distance, lessThan(expectedDistance + tolerance));
     });

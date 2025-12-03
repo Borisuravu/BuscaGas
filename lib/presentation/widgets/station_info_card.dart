@@ -49,12 +49,22 @@ class StationInfoCard extends StatelessWidget {
                   ),
                 ),
                 if (onClose != null)
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: onClose,
-                    iconSize: 20,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                  Material(
+                    type: MaterialType.transparency,
+                    child: InkWell(
+                      onTap: onClose,
+                      borderRadius: BorderRadius.circular(20),
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Center(
+                          child: Icon(
+                            Icons.close,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
               ],
             ),

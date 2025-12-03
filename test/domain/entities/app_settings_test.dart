@@ -92,7 +92,7 @@ void main() {
 
     test('debe aceptar todos los tipos de combustible válidos', () {
       // Arrange
-      final validFuels = FuelType.values;
+      const validFuels = FuelType.values;
 
       // Act & Assert
       for (var fuel in validFuels) {
