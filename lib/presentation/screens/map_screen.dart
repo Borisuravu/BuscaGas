@@ -15,6 +15,7 @@ import 'package:buscagas/presentation/widgets/station_info_card.dart';
 import 'package:buscagas/domain/usecases/get_nearby_stations.dart';
 import 'package:buscagas/domain/usecases/filter_by_fuel_type.dart';
 import 'package:buscagas/domain/usecases/calculate_distance.dart';
+import 'package:buscagas/domain/usecases/assign_price_range.dart';
 import 'package:buscagas/data/repositories/gas_station_repository_impl.dart';
 import 'package:buscagas/data/datasources/remote/api_datasource.dart';
 import 'package:buscagas/data/datasources/local/database_datasource.dart';
@@ -80,6 +81,7 @@ class _MapScreenState extends State<MapScreen> {
     final getNearbyStations = GetNearbyStationsUseCase(repository);
     final filterByFuelType = FilterByFuelTypeUseCase();
     final calculateDistance = CalculateDistanceUseCase();
+    final assignPriceRange = AssignPriceRangeUseCase();
     final locationService = LocationService();
     
     // Crear MapBloc
@@ -87,6 +89,7 @@ class _MapScreenState extends State<MapScreen> {
       getNearbyStations: getNearbyStations,
       filterByFuelType: filterByFuelType,
       calculateDistance: calculateDistance,
+      assignPriceRange: assignPriceRange,
       settings: settings,
       locationService: locationService,
     );
@@ -313,7 +316,6 @@ class _MapScreenState extends State<MapScreen> {
           },
           myLocationEnabled: true,
           myLocationButtonEnabled: false,
-          mapType: MapType.normal,
           zoomControlsEnabled: false,
           markers: _buildMarkers(state.stations, state.currentFuelType),
           onTap: (_) => _onMapTapped(),
@@ -380,7 +382,7 @@ class _MapScreenState extends State<MapScreen> {
 
   /// Callback cuando se cierra la tarjeta
   void _onCloseCard() {
-    _mapBloc?.add(const SelectStation(station: null));
+    _mapBloc?.add(const SelectStation());
   }
 
   /// Callback cuando se toca el mapa

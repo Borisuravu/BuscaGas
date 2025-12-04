@@ -1,21 +1,35 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../core/errors/app_error.dart';
 import '../../../domain/usecases/get_nearby_stations.dart';
 import '../../../domain/usecases/filter_by_fuel_type.dart';
 import '../../../domain/usecases/calculate_distance.dart';
+import '../../../domain/usecases/assign_price_range.dart';
 import '../../../domain/entities/app_settings.dart';
 import '../../../domain/entities/gas_station.dart';
-import '../../../domain/entities/fuel_type.dart';
-import '../../../domain/entities/price_range.dart';
 import '../../../services/location_service.dart';
 import 'map_event.dart';
 import 'map_state.dart';
 
 /// BLoC para gestionar el estado del mapa principal
+/// 
+/// Optimizaciones implementadas:
+/// - Límite de 50 marcadores para mantener 60 FPS en el mapa
+/// - Ordenamiento por distancia para mostrar las gasolineras más cercanas
+/// - Filtrado por tipo de combustible preferido
+/// - Clasificación por rangos de precio
 class MapBloc extends Bloc<MapEvent, MapState> {
+  /// Límite máximo de marcadores en el mapa para mantener rendimiento óptimo
+  /// 
+  /// Valor recomendado: 50 marcadores
+  /// - Mantiene 60 FPS en dispositivos de gama media/baja
+  /// - Reduce uso de memoria y batería
+  /// - Muestra solo las gasolineras más cercanas y relevantes
+  static const int maxMarkersOnMap = 50;
   final GetNearbyStationsUseCase _getNearbyStations;
   final FilterByFuelTypeUseCase _filterByFuelType;
   final CalculateDistanceUseCase _calculateDistance;
+  final AssignPriceRangeUseCase _assignPriceRange;
   final AppSettings _settings;
   final LocationService _locationService;
 
@@ -23,11 +37,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     required GetNearbyStationsUseCase getNearbyStations,
     required FilterByFuelTypeUseCase filterByFuelType,
     required CalculateDistanceUseCase calculateDistance,
+    required AssignPriceRangeUseCase assignPriceRange,
     required AppSettings settings,
     required LocationService locationService,
   })  : _getNearbyStations = getNearbyStations,
         _filterByFuelType = filterByFuelType,
         _calculateDistance = calculateDistance,
+        _assignPriceRange = assignPriceRange,
         _settings = settings,
         _locationService = locationService,
         super(const MapInitial()) {
@@ -75,12 +91,16 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       stations.sort((a, b) => (a.distance ?? 0).compareTo(b.distance ?? 0));
 
       // 5. Limitar a 50 marcadores más cercanos (optimización de rendimiento)
-      if (stations.length > 50) {
-        stations = stations.sublist(0, 50);
+      // Esto mantiene 60 FPS en el mapa y reduce el uso de memoria
+      if (stations.length > maxMarkersOnMap) {
+        stations = stations.sublist(0, maxMarkersOnMap);
       }
 
       // 6. Clasificar por rangos de precio
-      _assignPriceRanges(stations, _settings.preferredFuel);
+      _assignPriceRange.call(
+        stations: stations,
+        fuelType: _settings.preferredFuel,
+      );
 
       // 7. Emitir estado cargado
       emit(MapLoaded(
@@ -90,8 +110,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         currentLongitude: event.longitude,
         searchRadiusKm: _settings.searchRadius,
       ));
-    } catch (e) {
-      emit(MapError(message: 'Error al cargar datos: ${e.toString()}'));
+    } catch (e, stackTrace) {
+      emit(MapError(
+        error: AppError.network(
+          message: 'Error al cargar datos del mapa',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      ));
     }
   }
 
@@ -106,13 +132,16 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
     try {
       // 1. Volver a filtrar con nuevo tipo de combustible
-      List<GasStation> filteredStations = _filterByFuelType.call(
+      final List<GasStation> filteredStations = _filterByFuelType.call(
         stations: currentState.stations,
         fuelType: event.fuelType,
       );
 
       // 2. Reclasificar por rangos de precio
-      _assignPriceRanges(filteredStations, event.fuelType);
+      _assignPriceRange.call(
+        stations: filteredStations,
+        fuelType: event.fuelType,
+      );
 
       // 3. Emitir nuevo estado
       emit(currentState.copyWith(
@@ -120,8 +149,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         currentFuelType: event.fuelType,
         clearSelection: true,
       ));
-    } catch (e) {
-      emit(MapError(message: 'Error al cambiar combustible: ${e.toString()}'));
+    } catch (e, stackTrace) {
+      emit(MapError(
+        error: AppError.data(
+          message: 'Error al filtrar por tipo de combustible',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      ));
     }
   }
 
@@ -132,21 +167,31 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   ) async {
     try {
       // Usar el servicio de ubicación
-      Position position = await _locationService.getCurrentPosition();
+      final Position position = await _locationService.getCurrentPosition();
 
       // Recargar datos con nueva ubicación
       add(LoadMapData(
         latitude: position.latitude,
         longitude: position.longitude,
       ));
-    } on LocationServiceDisabledException {
-      emit(const MapError(
-          message:
-              'Servicio de ubicación deshabilitado. Por favor, activa el GPS.'));
+    } on LocationServiceDisabledException catch (e, stackTrace) {
+      emit(MapError(
+        error: AppError.permission(
+          message: 'Servicio de ubicación deshabilitado. Por favor, activa el GPS.',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      ));
     } on PermissionDeniedException {
       emit(const MapLocationPermissionDenied());
-    } catch (e) {
-      emit(MapError(message: 'Error al obtener ubicación: ${e.toString()}'));
+    } catch (e, stackTrace) {
+      emit(MapError(
+        error: AppError.permission(
+          message: 'Error al obtener ubicación',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      ));
     }
   }
 
@@ -198,37 +243,5 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       latitude: currentState.currentLatitude,
       longitude: currentState.currentLongitude,
     ));
-  }
-
-  /// Método auxiliar: Clasificar gasolineras por rango de precio
-  void _assignPriceRanges(List<GasStation> stations, FuelType fuelType) {
-    // 1. Extraer precios válidos
-    List<double> prices = stations
-        .map((s) => s.getPriceForFuel(fuelType))
-        .whereType<double>()
-        .toList();
-
-    if (prices.isEmpty) return;
-
-    // 2. Calcular percentiles (33% y 66%)
-    prices.sort();
-    int count = prices.length;
-
-    double p33 = prices[(count * 0.33).floor()];
-    double p66 = prices[(count * 0.66).floor()];
-
-    // 3. Asignar rangos
-    for (var station in stations) {
-      double? price = station.getPriceForFuel(fuelType);
-      if (price == null) continue;
-
-      if (price <= p33) {
-        station.priceRange = PriceRange.low;
-      } else if (price <= p66) {
-        station.priceRange = PriceRange.medium;
-      } else {
-        station.priceRange = PriceRange.high;
-      }
-    }
   }
 }

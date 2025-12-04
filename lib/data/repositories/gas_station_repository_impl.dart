@@ -3,6 +3,7 @@
 library;
 
 import 'dart:math';
+import 'package:buscagas/core/cache/simple_cache.dart';
 import 'package:buscagas/domain/entities/gas_station.dart';
 import 'package:buscagas/domain/repositories/gas_station_repository.dart';
 import 'package:buscagas/data/datasources/remote/api_datasource.dart';
@@ -11,6 +12,11 @@ import 'package:buscagas/data/datasources/local/database_datasource.dart';
 class GasStationRepositoryImpl implements GasStationRepository {
   final ApiDataSource _apiDataSource;
   final DatabaseDataSource _databaseDataSource;
+  
+  // Caché en memoria para consultas repetidas (TTL: 30 minutos)
+  final SimpleCache<List<GasStation>> _memoryCache = SimpleCache<List<GasStation>>(
+    
+  );
 
   /// Constructor con inyección de dependencias
   ///
@@ -43,8 +49,19 @@ class GasStationRepositoryImpl implements GasStationRepository {
   @override
   Future<List<GasStation>> getCachedStations() async {
     try {
-      // Obtener todas las estaciones de la base de datos local
-      return await _databaseDataSource.getAllStations();
+      // 1. Verificar si hay datos en caché de memoria
+      final cachedData = _memoryCache.get('all_stations');
+      if (cachedData != null) {
+        return cachedData;
+      }
+
+      // 2. Si no hay en memoria, obtener de base de datos
+      final stations = await _databaseDataSource.getAllStations();
+      
+      // 3. Guardar en caché de memoria para futuras consultas
+      _memoryCache.put('all_stations', stations);
+      
+      return stations;
     } catch (e) {
       throw Exception('Error al obtener estaciones en caché: $e');
     }
@@ -61,6 +78,9 @@ class GasStationRepositoryImpl implements GasStationRepository {
 
       // 3. Actualizar timestamp de última sincronización
       await _databaseDataSource.updateLastSync(DateTime.now());
+      
+      // 4. Invalidar caché en memoria para forzar recarga
+      _memoryCache.clear();
     } catch (e) {
       throw Exception('Error al actualizar caché: $e');
     }
@@ -73,15 +93,24 @@ class GasStationRepositoryImpl implements GasStationRepository {
     required double radiusKm,
   }) async {
     try {
-      // 1. Obtener todas las estaciones del caché
+      // 1. Crear clave única para esta consulta específica
+      final cacheKey = 'nearby_${latitude.toStringAsFixed(2)}_${longitude.toStringAsFixed(2)}_$radiusKm';
+      
+      // 2. Verificar si hay datos en caché para esta ubicación
+      final cachedNearby = _memoryCache.get(cacheKey);
+      if (cachedNearby != null) {
+        return cachedNearby;
+      }
+
+      // 3. Obtener todas las estaciones del caché
       final allStations = await getCachedStations();
 
-      // 2. Filtrar estaciones dentro del radio especificado
+      // 4. Filtrar estaciones dentro del radio especificado
       final nearbyStations = allStations.where((station) {
         return station.isWithinRadius(latitude, longitude, radiusKm);
       }).toList();
 
-      // 3. Ordenar por distancia usando la fórmula de Haversine
+      // 5. Ordenar por distancia usando la fórmula de Haversine
       nearbyStations.sort((a, b) {
         final distanceA =
             _calculateDistance(a.latitude, a.longitude, latitude, longitude);
@@ -89,6 +118,9 @@ class GasStationRepositoryImpl implements GasStationRepository {
             _calculateDistance(b.latitude, b.longitude, latitude, longitude);
         return distanceA.compareTo(distanceB);
       });
+      
+      // 6. Guardar resultado en caché (con TTL reducido de 10 minutos)
+      _memoryCache.put(cacheKey, nearbyStations, customTtl: const Duration(minutes: 10));
 
       return nearbyStations;
     } catch (e) {
@@ -105,16 +137,16 @@ class GasStationRepositoryImpl implements GasStationRepository {
   ) {
     const double earthRadiusKm = 6371.0;
 
-    double dLat = _degreesToRadians(lat2 - lat1);
-    double dLon = _degreesToRadians(lon2 - lon1);
+    final double dLat = _degreesToRadians(lat2 - lat1);
+    final double dLon = _degreesToRadians(lon2 - lon1);
 
-    double a = sin(dLat / 2) * sin(dLat / 2) +
+    final double a = sin(dLat / 2) * sin(dLat / 2) +
         cos(_degreesToRadians(lat1)) *
             cos(_degreesToRadians(lat2)) *
             sin(dLon / 2) *
             sin(dLon / 2);
 
-    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
     return earthRadiusKm * c;
   }

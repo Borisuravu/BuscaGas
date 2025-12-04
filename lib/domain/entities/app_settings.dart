@@ -69,18 +69,14 @@ class AppSettings {
       } else {
         // Si no hay datos en BD, devolver valores por defecto
         return AppSettings(
-          searchRadius: 10,
-          preferredFuel: FuelType.gasolina95,
-          darkMode: false,
+          
         );
       }
     } catch (e) {
       debugPrint('Error cargando configuración desde BD: $e');
       // Fallback a valores por defecto
       return AppSettings(
-        searchRadius: 10,
-        preferredFuel: FuelType.gasolina95,
-        darkMode: false,
+        
       );
     }
   }

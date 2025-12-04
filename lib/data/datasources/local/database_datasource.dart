@@ -24,7 +24,7 @@ class DatabaseDataSource {
 
   /// Inicializar base de datos
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'buscagas.db');
+    final String path = join(await getDatabasesPath(), 'buscagas.db');
 
     return await openDatabase(
       path,
@@ -139,8 +139,8 @@ class DatabaseDataSource {
     const int batchSize = 500;
     
     // Separar estaciones y precios para commits independientes
-    List<Map<String, dynamic>> stationMaps = [];
-    List<Map<String, dynamic>> priceMaps = [];
+    final List<Map<String, dynamic>> stationMaps = [];
+    final List<Map<String, dynamic>> priceMaps = [];
     
     final cachedAt = DateTime.now().toIso8601String();
     
@@ -204,7 +204,7 @@ class DatabaseDataSource {
     final db = await database;
 
     final stationMaps = await db.query('gas_stations');
-    List<GasStation> stations = [];
+    final List<GasStation> stations = [];
 
     for (var stationMap in stationMaps) {
       // Obtener precios asociados
@@ -214,8 +214,8 @@ class DatabaseDataSource {
         whereArgs: [stationMap['id']],
       );
 
-      List<FuelPrice> prices = priceMaps.map((priceMap) {
-        FuelType fuelType = FuelType.values.firstWhere(
+      final List<FuelPrice> prices = priceMaps.map((priceMap) {
+        final FuelType fuelType = FuelType.values.firstWhere(
           (e) => e.name == priceMap['fuel_type'],
           orElse: () => FuelType.gasolina95,
         );
@@ -252,13 +252,13 @@ class DatabaseDataSource {
 
     // Aproximación simple: calcular bounding box
     // 1 grado ≈ 111 km
-    double latDelta = radiusKm / 111.0;
-    double lonDelta = radiusKm / (111.0 * (centerLat * 3.14159 / 180).abs());
+    final double latDelta = radiusKm / 111.0;
+    final double lonDelta = radiusKm / (111.0 * (centerLat * 3.14159 / 180).abs());
 
-    double minLat = centerLat - latDelta;
-    double maxLat = centerLat + latDelta;
-    double minLon = centerLon - lonDelta;
-    double maxLon = centerLon + lonDelta;
+    final double minLat = centerLat - latDelta;
+    final double maxLat = centerLat + latDelta;
+    final double minLon = centerLon - lonDelta;
+    final double maxLon = centerLon + lonDelta;
 
     final stationMaps = await db.query(
       'gas_stations',
@@ -266,7 +266,7 @@ class DatabaseDataSource {
       whereArgs: [minLat, maxLat, minLon, maxLon],
     );
 
-    List<GasStation> stations = [];
+    final List<GasStation> stations = [];
 
     for (var stationMap in stationMaps) {
       final priceMaps = await db.query(
@@ -275,8 +275,8 @@ class DatabaseDataSource {
         whereArgs: [stationMap['id']],
       );
 
-      List<FuelPrice> prices = priceMaps.map((priceMap) {
-        FuelType fuelType = FuelType.values.firstWhere(
+      final List<FuelPrice> prices = priceMaps.map((priceMap) {
+        final FuelType fuelType = FuelType.values.firstWhere(
           (e) => e.name == priceMap['fuel_type'],
           orElse: () => FuelType.gasolina95,
         );

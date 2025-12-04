@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/errors/app_error.dart';
 import '../../../domain/entities/app_settings.dart';
 import '../../../domain/entities/fuel_type.dart';
 import 'settings_event.dart';
@@ -33,9 +34,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         isDarkMode: _settings.darkMode,
         lastSyncTimestamp: _settings.lastUpdateTimestamp,
       ));
-    } catch (e) {
+    } catch (e, stackTrace) {
       emit(SettingsError(
-          message: 'Error al cargar configuración: ${e.toString()}'));
+        error: AppError.database(
+          message: 'Error al cargar configuración',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      ));
     }
   }
 
@@ -55,8 +61,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
       // Emitir nuevo estado
       emit(currentState.copyWith(searchRadiusKm: event.radiusKm));
-    } catch (e) {
-      emit(SettingsError(message: 'Error al cambiar radio: ${e.toString()}'));
+    } catch (e, stackTrace) {
+      emit(SettingsError(
+        error: AppError.database(
+          message: 'Error al cambiar radio de búsqueda',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      ));
     }
   }
 
@@ -76,9 +88,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
       // Emitir nuevo estado
       emit(currentState.copyWith(preferredFuel: event.fuelType));
-    } catch (e) {
+    } catch (e, stackTrace) {
       emit(SettingsError(
-          message: 'Error al cambiar combustible: ${e.toString()}'));
+        error: AppError.database(
+          message: 'Error al cambiar combustible preferido',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      ));
     }
   }
 
@@ -98,8 +115,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
       // Emitir nuevo estado
       emit(currentState.copyWith(isDarkMode: event.isDarkMode));
-    } catch (e) {
-      emit(SettingsError(message: 'Error al cambiar tema: ${e.toString()}'));
+    } catch (e, stackTrace) {
+      emit(SettingsError(
+        error: AppError.database(
+          message: 'Error al cambiar tema',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      ));
     }
   }
 
@@ -120,9 +143,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         preferredFuel: FuelType.gasolina95,
         isDarkMode: false,
       ));
-    } catch (e) {
+    } catch (e, stackTrace) {
       emit(SettingsError(
-          message: 'Error al restaurar configuración: ${e.toString()}'));
+        error: AppError.database(
+          message: 'Error al restaurar configuración',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      ));
     }
   }
 }

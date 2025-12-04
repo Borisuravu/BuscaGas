@@ -40,7 +40,7 @@ class GasStation {
   }
 
   bool isWithinRadius(double lat, double lon, double radiusKm) {
-    double distance = _calculateDistance(lat, lon);
+    final double distance = _calculateDistance(lat, lon);
     return distance <= radiusKm;
   }
 
@@ -48,16 +48,16 @@ class GasStation {
     // Fórmula de Haversine
     const double earthRadiusKm = 6371.0;
 
-    double dLat = _degreesToRadians(latitude - lat);
-    double dLon = _degreesToRadians(longitude - lon);
+    final double dLat = _degreesToRadians(latitude - lat);
+    final double dLon = _degreesToRadians(longitude - lon);
 
-    double a = sin(dLat / 2) * sin(dLat / 2) +
+    final double a = sin(dLat / 2) * sin(dLat / 2) +
         cos(_degreesToRadians(lat)) *
             cos(_degreesToRadians(latitude)) *
             sin(dLon / 2) *
             sin(dLon / 2);
 
-    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
     return earthRadiusKm * c;
   }

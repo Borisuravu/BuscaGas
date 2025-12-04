@@ -142,9 +142,6 @@ void main() {
           name: 'Test',
           latitude: 40.4168,
           longitude: -3.7038,
-          address: '',
-          locality: '',
-          operator: '',
           prices: [],
         ),
       ]);

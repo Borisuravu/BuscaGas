@@ -54,10 +54,10 @@ class GasStationModel {
 
   // Mapper a entidad de dominio
   GasStation toDomain() {
-    List<FuelPrice> prices = [];
+    final List<FuelPrice> prices = [];
 
     if (precioGasolina95 != null) {
-      double? price = _parsePrice(precioGasolina95!);
+      final double? price = _parsePrice(precioGasolina95!);
       if (price != null) {
         prices.add(FuelPrice(
           fuelType: FuelType.gasolina95,
@@ -68,7 +68,7 @@ class GasStationModel {
     }
 
     if (precioDiesel != null) {
-      double? price = _parsePrice(precioDiesel!);
+      final double? price = _parsePrice(precioDiesel!);
       if (price != null) {
         prices.add(FuelPrice(
           fuelType: FuelType.dieselGasoleoA,

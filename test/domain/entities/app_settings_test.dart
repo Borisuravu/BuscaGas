@@ -127,7 +127,7 @@ void main() {
 
     test('debe permitir crear múltiples instancias independientes', () {
       // Arrange & Act
-      final settings1 = AppSettings(searchRadius: 10);
+      final settings1 = AppSettings();
       final settings2 = AppSettings(searchRadius: 20);
 
       // Modificar settings1
@@ -143,9 +143,7 @@ void main() {
     test('debe mantener la mutabilidad de campos', () {
       // Arrange
       final settings = AppSettings(
-        searchRadius: 10,
-        preferredFuel: FuelType.gasolina95,
-        darkMode: false,
+        
       );
 
       // Act - Modificar todos los campos

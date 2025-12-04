@@ -27,12 +27,9 @@ class AppTheme {
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryLight,
         secondary: AppColors.secondaryLight,
-        surface: AppColors.surfaceLight,
         error: AppColors.errorLight,
-        onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: AppColors.textPrimaryLight,
-        onError: Colors.white,
       ),
 
       // Fondo de scaffold
@@ -199,10 +196,6 @@ class AppTheme {
         secondary: AppColors.secondaryDark,
         surface: AppColors.surfaceDark,
         error: AppColors.errorDark,
-        onPrimary: Colors.black,
-        onSecondary: Colors.black,
-        onSurface: AppColors.textPrimaryDark,
-        onError: Colors.black,
       ),
 
       // Fondo de scaffold

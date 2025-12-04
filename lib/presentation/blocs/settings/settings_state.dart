@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../core/errors/app_error.dart';
 import '../../../domain/entities/fuel_type.dart';
 
 /// Clase base para estados de configuración
@@ -54,10 +55,13 @@ class SettingsLoaded extends SettingsState {
 
 /// Estado: Error al cargar/guardar configuración
 class SettingsError extends SettingsState {
-  final String message;
+  final AppError error;
 
-  const SettingsError({required this.message});
+  const SettingsError({required this.error});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [error];
+
+  /// Getter de conveniencia para el mensaje
+  String get message => error.message;
 }

@@ -26,6 +26,11 @@ Evita realizar cambios innecesarios en los siguientes archivos, ya que contienen
    - **No modificar la lógica de inicialización sin verificar el impacto en el mapa**.
    - Los servicios `ApiDataSource`, `DatabaseDataSource` y `GasStationRepositoryImpl` se inicializan aquí.
 
+5. **`lib/core/errors/app_error.dart`**
+   - Sistema centralizado de manejo de errores.
+   - **Usar siempre `AppError` en lugar de `String` para errores en BLoCs**.
+   - Proporciona tipos específicos de error (network, permission, data, etc.).
+
 ---
 
 ## APIs Habilitadas en Google Cloud Console

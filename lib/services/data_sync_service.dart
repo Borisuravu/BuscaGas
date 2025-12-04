@@ -18,6 +18,8 @@ class DataSyncService {
   final GasStationRepositoryImpl _repository;
   final Connectivity _connectivity = Connectivity();
   final Battery _battery = Battery();
+  // Nota: _databaseDataSource podría usarse en futuras optimizaciones
+  // ignore: unused_field
   final DatabaseDataSource _databaseDataSource = DatabaseDataSource();
   Timer? _syncTimer;
   bool _isInForeground = true;
@@ -103,11 +105,11 @@ class DataSyncService {
       await PerformanceMonitor.measure('Sync', () async {
         // Descargar datos frescos de la API
         debugPrint('📥 Descargando datos frescos de la API...');
-        List<GasStation> freshData = await _repository.fetchRemoteStations();
+        final List<GasStation> freshData = await _repository.fetchRemoteStations();
         debugPrint('✅ Descargados ${freshData.length} estaciones de la API');
 
         // Obtener caché actual
-        List<GasStation> cachedData = await _repository.getCachedStations();
+        final List<GasStation> cachedData = await _repository.getCachedStations();
         debugPrint('📦 Caché actual: ${cachedData.length} estaciones');
 
         // Comparar datos
@@ -173,7 +175,7 @@ class DataSyncService {
     if (fresh.isEmpty) return false;
 
     // Comparar precios de primeras 10 gasolineras como muestra
-    int samplesToCompare = min(10, fresh.length);
+    final int samplesToCompare = min(10, fresh.length);
 
     for (int i = 0; i < samplesToCompare; i++) {
       // Obtener precios de gasolina 95

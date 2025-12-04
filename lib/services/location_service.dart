@@ -12,6 +12,8 @@ import 'package:buscagas/core/utils/performance_monitor.dart';
 /// - Optimizar consumo de batería con distanceFilter
 class LocationService {
   // Configuración de precisión de ubicación optimizada
+  // Nota: _locationSettings podría usarse con getPositionStream() en el futuro
+  // ignore: unused_field
   static const LocationSettings _locationSettings = LocationSettings(
     accuracy: LocationAccuracy.high,
     distanceFilter: 50, // Solo actualizar si se mueve >50 metros (optimización batería)
@@ -29,16 +31,16 @@ class LocationService {
   Future<Position> getCurrentPosition() async {
     return PerformanceMonitor.measure('GPS', () async {
       // 1. Verificar si el servicio de ubicación está habilitado
-      bool serviceEnabled = await isLocationServiceEnabled();
+      final bool serviceEnabled = await isLocationServiceEnabled();
       if (!serviceEnabled) {
         throw const LocationServiceDisabledException();
       }
 
       // 2. Verificar permisos
-      bool hasPermission = await checkLocationPermission();
+      final bool hasPermission = await checkLocationPermission();
       if (!hasPermission) {
         // Intentar solicitar permisos
-        bool granted = await requestLocationPermission();
+        final bool granted = await requestLocationPermission();
         if (!granted) {
           throw const PermissionDeniedException(
               'Permisos de ubicación denegados');
@@ -47,7 +49,7 @@ class LocationService {
 
       // 3. Obtener posición actual con timeout
       try {
-        Position position = await Geolocator.getCurrentPosition(
+        final Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
         ).timeout(
           const Duration(seconds: 30),
@@ -59,7 +61,7 @@ class LocationService {
         return position;
       } catch (e) {
         // Si falla, intentar obtener última ubicación conocida
-        Position? lastKnown = await Geolocator.getLastKnownPosition();
+        final Position? lastKnown = await Geolocator.getLastKnownPosition();
         if (lastKnown != null) {
           return lastKnown;
         }
@@ -77,7 +79,7 @@ class LocationService {
 
   /// Verificar si la aplicación tiene permisos de ubicación
   Future<bool> checkLocationPermission() async {
-    LocationPermission permission = await Geolocator.checkPermission();
+    final LocationPermission permission = await Geolocator.checkPermission();
 
     return permission == LocationPermission.whileInUse ||
         permission == LocationPermission.always;

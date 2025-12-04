@@ -235,5 +235,120 @@ void main() {
         expect(nearbyStations.first.id, isNotEmpty);
       }
     });
+
+    // ==================== TEST 6: Caché en memoria (SimpleCache) ====================
+
+    test('getCachedStations debe consultar base de datos la primera vez',
+        () async {
+      // Arrange
+      final mockCachedStations = [
+        GasStation(
+          id: '1',
+          name: 'Gasolinera Cache',
+          latitude: 40.0,
+          longitude: -3.0,
+          address: 'Calle Test',
+          locality: 'Madrid',
+          operator: 'Test',
+          prices: [],
+        ),
+      ];
+
+      when(mockDatabaseDataSource.getAllStations())
+          .thenAnswer((_) async => mockCachedStations);
+
+      // Act: Primera llamada - debe consultar la base de datos
+      final result = await repository.getCachedStations();
+      
+      // Assert
+      expect(result.length, 1);
+      expect(result[0].id, '1');
+      verify(mockDatabaseDataSource.getAllStations()).called(1);
+    });
+
+    test('updateCache debe invalidar caché en memoria', () async {
+      // Arrange
+      final newStations = [
+        GasStation(
+          id: '2',
+          name: 'Nueva',
+          latitude: 40.0,
+          longitude: -3.0,
+          address: 'Calle Nueva',
+          locality: 'Madrid',
+          operator: 'Nuevo',
+          prices: [],
+        ),
+      ];
+
+      when(mockDatabaseDataSource.clearAll()).thenAnswer((_) async => {});
+      when(mockDatabaseDataSource.insertBatch(any)).thenAnswer((_) async => {});
+      when(mockDatabaseDataSource.updateLastSync(any))
+          .thenAnswer((_) async => {});
+
+      // Act: Actualizar caché
+      await repository.updateCache(newStations);
+      
+      // Assert: Debe haber limpiado e insertado datos
+      verify(mockDatabaseDataSource.clearAll()).called(1);
+      verify(mockDatabaseDataSource.insertBatch(newStations)).called(1);
+      verify(mockDatabaseDataSource.updateLastSync(any)).called(1);
+    });
+
+    test('getNearbyStations debe funcionar correctamente con caché', () async {
+      // Arrange
+      final allStations = [testStation1, testStation2];
+
+      when(mockDatabaseDataSource.getAllStations())
+          .thenAnswer((_) async => allStations);
+
+      // Act: Consultar estaciones cercanas
+      final result = await repository.getNearbyStations(
+        latitude: 40.4168,
+        longitude: -3.7038,
+        radiusKm: 10.0,
+      );
+      
+      // Assert: Debe retornar estaciones y haber consultado DB
+      expect(result, isNotEmpty);
+      verify(mockDatabaseDataSource.getAllStations()).called(greaterThanOrEqualTo(1));
+    });
+
+    test('getNearbyStations con diferentes radios debe funcionar', () async {
+      // Arrange
+      final allStations = [testStation1, testStation2, testStation3];
+
+      when(mockDatabaseDataSource.getAllStations())
+          .thenAnswer((_) async => allStations);
+
+      // Act: Consultar con radio pequeño
+      final resultSmall = await repository.getNearbyStations(
+        latitude: 40.4168,
+        longitude: -3.7038,
+        radiusKm: 5.0,
+      );
+
+      // Act: Consultar con radio grande
+      final resultLarge = await repository.getNearbyStations(
+        latitude: 40.4168,
+        longitude: -3.7038,
+        radiusKm: 50.0,
+      );
+
+      // Assert: El radio mayor debe tener más o igual estaciones
+      expect(resultLarge.length, greaterThanOrEqualTo(resultSmall.length));
+    });
+
+    test('Repository debe manejar errores de caché correctamente', () async {
+      // Arrange
+      when(mockDatabaseDataSource.getAllStations())
+          .thenThrow(Exception('Database error'));
+
+      // Act & Assert: Debe propagar el error
+      expect(
+        () => repository.getCachedStations(),
+        throwsException,
+      );
+    });
   });
 }

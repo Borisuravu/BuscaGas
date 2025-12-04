@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../core/errors/app_error.dart';
 import '../../../domain/entities/gas_station.dart';
 import '../../../domain/entities/fuel_type.dart';
 
@@ -72,12 +73,15 @@ class MapLoaded extends MapState {
 
 /// Estado: Error al cargar datos
 class MapError extends MapState {
-  final String message;
+  final AppError error;
 
-  const MapError({required this.message});
+  const MapError({required this.error});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [error];
+
+  /// Getter de conveniencia para el mensaje
+  String get message => error.message;
 }
 
 /// Estado: Sin permisos de ubicación
